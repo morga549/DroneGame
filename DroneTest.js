@@ -180,13 +180,12 @@ function addPackage(){
 
   function runGame(e) {
       if (!e.paused) {
-          updateDroneX();
-          updateDroneY();
-          renderDrone();
+          if( !drone.landed){   //only update drone if drone is moving
+              updateDrone();
+              renderDrone();
+          }
           stage.update();
-          
-          
-      }    
+      }
   }
 
   function pauseGame(e) {
@@ -197,7 +196,7 @@ function addPackage(){
 // ------------------------- drone mechanics ----------------------------- //
 
 function movePropellors(){
-    //rotate propellors
+    //simulates rotation of propellors
     if(d_beginFillPropellorR.style === "lightgrey") {
         d_beginFillPropellorR.style = "grey";
         d_beginFillPropellorL.style = "lightgrey";
@@ -252,48 +251,151 @@ function moveDown(e){ //alert("moveDroneY()");
 
 
 
-function updateDroneX(){
+function updateDrone(){
     
     var nextX = drone.x;
+    var nextY = drone.y;
     var nextBounds = drone.getBounds();
+    var collisionObject, collisionBounds;
     
+    
+    
+    //determine next position for drone
+    //horizontal
     if(aKeyDown && !drone.landed){  //drone is moving to the left
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         nextX = drone.x - 1;
-        nextBounds.x -= 1; //update bounds
+        nextBounds.x -= 1;
+    }
+    else if(dKeyDown && !drone.landed) { //drone is moving to the right
+        
+        nextX = drone.x + 1;
+        nextBounds.x += 1; //update bounds
+    }
+    
+    //vertical
+    if(!drone.up && !drone.landed){ //drone is falling
+        
+        nextY = drone.y + 1;
+        nextBounds.y += 1;
+    }
+    else if( !drone.landed){         //drone is rising
+        
+        nextY = drone.y - 1;
+        nextBounds.y -= 1;
+    }
+        
+    
+    //revise next position for drone
+    /*
+     There are eight possible types of collisions
+     1. Hit bottom
+     2. Hit bottom left corner
+     3. Hit bottom right corner
+     4. Hit left side
+     5. Hit right side
+     6. Hit top
+     7. Hit top left corner
+     8. Hit top right corner
+     
+     
+     There are six possible combinations of movement
+     1. Up and Left
+     2. Up and Right
+     3. Up
+     4. Down and Left
+     5. Down and Right
+     6. Down
+     
+     The position will be revised depending on which types exist.
+     */
+    
+    
+    //perform collision detection
+    collisionObject = detectCollision(nextBounds);
+    
+    if(collisionObject !== "none" && collisionObject.hazard){   //hazard collision
+        destroyDrone();
+    }
+    
+    if(collisionObject !== "none" && !collisionObject.hazard){   //neutral collision
+        collisionBounds = collisionObject.getBounds();
+    
+        
+        //determine revised position based on collision combination
+        //down only
+        if(!drone.up && !drone.landed && !aKeyDown && !dKeyDown){
+            //get top y value of collision object
+            var top = collisionBounds.y;
+            nextY = top - drone.height; //set drone nextY to this value
+            drone.landed = true;
+        }
+        
+        //down, moving left
+        else if(!drone.up && !drone.landed && akeyDown){
+            
+            //check position drone contacts object
+            if(collisionBounds.y < (drone.nextY + drone.height))
+            
+        }
+        
+        //down, moving right
+        else if(!drone.up && !drone.landed && dkeyDown){
+            
+        }
+        
+        //up only
+        else if(drone.up && !aKeyDown && !dKeyDown){
+            //get bottom y value of collision object
+            var bottom = collisionBounds.y + collisionBounds.height;
+            nextY = bottom; //set drone nextY to this value
+        }
+        
+        //up, moving left
+        else if(drone.up && !drone.landed && akeyDown){
+            
+        }
+        
+        //up, moving right
+
+        else if(drone.up && !drone.landed && dkeyDown){
+            
+        }
+    } //end if collision
+    
+
+    //perform edge of screen detection
+    //horizontal
+    if(aKeyDown && !drone.landed) {
+        if(nextX < 0){  //offscreen to the left
+            nextX = 0;
+        }
+    }
+    else if(dKeyDown && !drone.landed) {
+        if(nextX > stage.canvas.width - drone.width) {
+            nextX = stage.canvas.width - drone.width;
+        }
+    }
+    
+    //vertical
+    if(!drone.up){
+        if(nextY > stage.canvas.height - drone.height){
+            nextY = stage.canvas.height - drone.height;
+            drone.landed = true;
+        }
+    }
+    else {
+        if(nextY < 0){
+            nextY = 0;
+        }
+    }
+    
+    drone.nextX = nextX;    //dynamically injected property
+    drone.nextY = nextY;
+    
+}
+
+    /*
         
         
         //collision detection
@@ -343,9 +445,9 @@ function updateDroneX(){
         }
     }
     drone.nextX = nextX;    //dynamically injected property
-    
-}
+    */
 
+/*
 function updateDroneY(){//alert(!drone.up);
     
     var nextY = drone.y;
@@ -401,7 +503,7 @@ function updateDroneY(){//alert(!drone.up);
     }
     drone.nextY = nextY; //dynamically injected property
 }
-
+*/
 
 
 function renderDrone(){
@@ -414,6 +516,10 @@ function renderDrone(){
     if(drone.up){
         movePropellors();
     }
+}
+
+function destroyDrone(){
+    alert("Drone is destroyed!");
 }
 
 
