@@ -8,13 +8,14 @@ var aKeyDown, dKeyDown, escKeyDown, spacebarDown;
 var gameObjects = [];   //contains all game objects
 
 
+
 //drone customization
 var d_beginFillBody;
 var d_beginFillPropellorL; //left side of propellor
 var d_beginFillPropellorR; //right side of propellor
 
 
-
+var gameOver = false;
 const A_KEY = 65;
 const D_KEY = 68;
 const ESC_KEY = 27;
@@ -179,7 +180,7 @@ function addPackage(){
 // --------------------------- game mechanics ----------------------------- //
 
   function runGame(e) {
-      if (!e.paused) {
+      if (!e.paused && !gameOver) {
           if( !drone.landed){   //only update drone if drone is moving
               updateDrone();
               renderDrone();
@@ -256,7 +257,7 @@ function updateDrone(){
     var nextX = drone.x;
     var nextY = drone.y;
     var nextBounds = drone.getBounds();
-    var collisionObject, collisionBounds;
+    var cObject, cBounds;
     
     
     
@@ -312,66 +313,113 @@ function updateDrone(){
     
     
     //perform collision detection
-    collisionObject = detectCollision(nextBounds);
+    cObject = detectCollision(nextBounds);
     
-    if(collisionObject !== "none" && collisionObject.hazard){   //hazard collision
+    if(cObject !== "none" && cObject.hazard){   //hazard collision
         destroyDrone();
     }
     
-    if(collisionObject !== "none" && !collisionObject.hazard){   //neutral collision
-        collisionBounds = collisionObject.getBounds();
-    
+    if(cObject !== "none" && !cObject.hazard){   //neutral collision
+        cBounds = cObject.getBounds();
+        //alert("collision!");
         
         //determine revised position based on collision combination
         //down only
-        if(!drone.up && !drone.landed && !aKeyDown && !dKeyDown){
+        if(!drone.up && !aKeyDown && !dKeyDown){
+            //alert("down only");
             //get top y value of collision object
-            var top = collisionBounds.y;
+            var top = cBounds.y;
             nextY = top - drone.height; //set drone nextY to this value
             drone.landed = true;
         }
         
         //down, moving left
-        else if(!drone.up && !drone.landed && akeyDown){
+        else if(!drone.up && aKeyDown){
+            //alert("down, moving left");
             
             //check position drone contacts object
-            if(collisionBounds.y < (drone.nextY + drone.height))
-            
+            if(cBounds.y < (drone.nextY + drone.height)) { //side hit
+                //alert("side hit");
+                var rightSide = cBounds.x + cBounds.width;
+                nextX = rightSide;
+            }
+            else {  //top hit
+                var top = cBounds.y;
+                nextY = top - drone.height; //set drone nextY to this value
+                drone.landed = true;
+            }
         }
         
         //down, moving right
-        else if(!drone.up && !drone.landed && dkeyDown){
+        else if(!drone.up && dKeyDown){
+            //alert("down, moving right");
             
+            //check position drone contacts object
+            if(cBounds.y < (drone.nextY + drone.height)) { //side hit
+                //alert("side hit");
+                var leftSide = cBounds.x;
+                nextX = leftSide - drone.width;
+            }
+            else {  //top hit
+                var top = cBounds.y;
+                nextY = top - drone.height; //set drone nextY to this value
+                drone.landed = true;
+            }
         }
         
         //up only
         else if(drone.up && !aKeyDown && !dKeyDown){
+            //alert("up only");
             //get bottom y value of collision object
-            var bottom = collisionBounds.y + collisionBounds.height;
+            var bottom = cBounds.y + cBounds.height;
             nextY = bottom; //set drone nextY to this value
         }
         
         //up, moving left
-        else if(drone.up && !drone.landed && akeyDown){
+        else if(drone.up && aKeyDown){
+            //alert("up, moving left");
             
+            //check position drone contacts object
+            if((cBounds.y + cBounds.height) > drone.nextY ){ //side hit
+                //alert("side hit");
+                var rightSide = cBounds.x + cBounds.width;
+                nextX = rightSide;
+            }
+            else {  //bottom hit
+                var bottom = cBounds.y + cBounds.height;
+                nextY = bottom; //set drone nextY to this value
+            }
         }
         
         //up, moving right
 
-        else if(drone.up && !drone.landed && dkeyDown){
+        else if(drone.up && dKeyDown){
+            //alert("up, moving right");
             
+            //check position drone contacts object
+            if((cBounds.y + cBounds.height) > drone.nextY ){ //side hit
+                //alert("side hit");
+                var leftSide = cBounds.x;
+                nextX = leftSide - drone.width;
+            }
+            else {  //bottom hit
+                var bottom = cBounds.y + cBounds.height;
+                nextY = bottom; //set drone nextY to this value
+            }
         }
     } //end if collision
     
 
+    
+    
     //perform edge of screen detection
     //horizontal
-    if(aKeyDown && !drone.landed) {
+    if(aKeyDown ) {
         if(nextX < 0){  //offscreen to the left
             nextX = 0;
         }
     }
-    else if(dKeyDown && !drone.landed) {
+    else if(dKeyDown) {
         if(nextX > stage.canvas.width - drone.width) {
             nextX = stage.canvas.width - drone.width;
         }
@@ -395,115 +443,6 @@ function updateDrone(){
     
 }
 
-    /*
-        
-        
-        //collision detection
-        var collisionObject = detectCollision(nextBounds);
-        if(collisionObject !== "none"){    //drone collided with object on left
-            //alert("collision: " + collisionObject.name);
-            
-            //get the bounds of the object
-            var objectBounds = collisionObject.getBounds();
-            
-            //get right corner x value of collision object
-            var rightCorner = objectBounds.x + objectBounds.width;
-            
-            //set drone nextX to this value
-            nextX = rightCorner;
-            //alert(nextX);
-        }
-        
-        //edge of screen detection
-        if(nextX < 0){  //offscreen to the left
-            nextX = 0;
-        }
-    }
-    else if(dKeyDown && !drone.landed) { //drone is moving to the right
-        
-        nextX = drone.x + 1;
-        nextBounds.x += 1; //update bounds
-        
-        //collision detection
-        var collisionObject = detectCollision(nextBounds);
-        if(collisionObject !== "none"){    //drone collided with object on left
-            
-            //get the bounds of the object
-            var objectBounds = collisionObject.getBounds();
-            
-            //get left corner x value of collision object
-            var leftCorner = objectBounds.x;
-            
-            //set drone nextX to this value
-            nextX = leftCorner - drone.width;
-            //alert(nextX);
-        }
-
-        //edge of screen detection
-        if(nextX > stage.canvas.width - drone.width) {
-            nextX = stage.canvas.width - drone.width;
-        }
-    }
-    drone.nextX = nextX;    //dynamically injected property
-    */
-
-/*
-function updateDroneY(){//alert(!drone.up);
-    
-    var nextY = drone.y;
-    var nextBounds = drone.getBounds();
-    
-    if(!drone.up){ //drone is falling
-        nextY = drone.y + 1;
-        nextBounds.y += 1;
-        
-        //collision detection
-        var collisionObject = detectCollision(nextBounds);
-        if(collisionObject !== "none"){    //drone collided with object on bottom
-            
-            //get the bounds of the object
-            var objectBounds = collisionObject.getBounds();
-            
-            //get top y value of collision object
-            var top = objectBounds.y;
-            
-            //set drone nextY to this value
-            nextY = top - drone.height;
-            drone.landed = true;
-        }
-
-        //edge of screen detection
-        if(nextY > stage.canvas.height - drone.height){
-            nextY = stage.canvas.height - drone.height;
-            drone.landed = true;
-        }
-    }
-    else{   //drone is rising
-        nextY = drone.y - 1;
-        nextBounds.y -= 1;
-        
-        //collision detection
-        var collisionObject = detectCollision(nextBounds);
-        if(collisionObject !== "none"){    //drone collided with object on bottom
-            
-            //get the bounds of the object
-            var objectBounds = collisionObject.getBounds();
-            
-            //get bottom y value of collision object
-            var bottom = objectBounds.y + objectBounds.height;
-            
-            //set drone nextY to this value
-            nextY = bottom;
-        }
-        
-        //edge of screen detection
-        if(nextY < 0){
-            nextY = 0;
-        }
-    }
-    drone.nextY = nextY; //dynamically injected property
-}
-*/
 
 
 function renderDrone(){
