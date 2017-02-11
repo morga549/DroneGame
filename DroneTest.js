@@ -2,8 +2,7 @@
 
 var queue;  // LoadQueue
 var stage;  // Stage
-var drone;  //Junior the Drone
-var package;    //The Package
+var drone, package, birds1;  //game objects
 var aKeyDown, dKeyDown, escKeyDown, spacebarDown;
 var gameObjects = [];   //contains all game objects
 
@@ -47,6 +46,7 @@ const SPACEBAR = 32;
       
       //drone
       addDrone();
+      addBirds();
       
 
       //ticker
@@ -166,7 +166,7 @@ function addPackage(){
     package.setBounds(package.x, package.y, package.width, package.height);
     
     //dynamically injected property
-    package.hazard = true;     //whether object will damage drone/package
+    package.hazard = false;     //whether object will damage drone/package
     package.grabbed = false;    //whether the drone has 'picked up' the package
     
     //add to stage
@@ -175,6 +175,32 @@ function addPackage(){
     
     //add to gameObject array
     gameObjects.push(package);
+}
+
+function addBirds(){
+    //create graphics object
+    var b = new createjs.Graphics();
+    b.beginFill("white");
+    b.drawRect(0,0,25,25);
+    
+    //create shape object
+    birds1 = new createjs.Shape(b);
+    birds1.x = 400;
+    birds1.y = 100;
+    birds1.width = 25;
+    birds1.height = 25;
+    birds1.name = "birds";
+    
+    //set bounds
+    birds1.setBounds(birds1.x, birds1.y, birds1.width, birds1.height);
+    
+    //dynamically injected property
+    birds1.hazard = true;
+    
+    //add to stage
+    stage.addChild(birds1);
+    stage.update();
+    gameObjects.push(birds1);
 }
 
 
