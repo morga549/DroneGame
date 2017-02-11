@@ -120,8 +120,14 @@ function addDrone() { //alert("addDrone()")
     drone.x = drone.y = 50;
     drone.width = 100;
     drone.height = 31;
-    drone.up = false;   //dynamically injected property
-    drone.landed = false;
+    
+    //set bounds
+    drone.setBounds(drone.x,drone.y,drone.width,drone.height);
+    
+    //dynamically injected property
+    drone.up = false;       //whether drone is flying upward
+    drone.landed = false;   //whether drone has landed on a surface
+    drone.carrying = false; //whether drone is carrying The Package
     
     //add to stage
     stage.addChild(drone);
@@ -146,11 +152,25 @@ function addPackage(){
     
     //create shape object
     package = new createjs.Shape(p);
-    package.x = package.y = 400,400;
+    package.x = 70;
+    package.y = 150;
+    package.width = 40;
+    package.height = 40;
+    package.name = "package";
+    
+    //set bounds
+    package.setBounds(package.x, package.y, package.width, package.height);
+    
+    //dynamically injected property
+    package.hazard = false;     //whether object will damage drone/package
+    package.grabbed = false;    //whether the drone has 'picked up' the package
     
     //add to stage
     stage.addChild(package);
     stage.update();
+    
+    //add to gameObject array
+    gameObjects.push(package);
 }
 
 
@@ -158,10 +178,12 @@ function addPackage(){
 
   function runGame(e) {
       if (!e.paused) {
+          detectCollision();
           updateDroneX();
           updateDroneY();
           renderDrone();
           stage.update();
+          
           
       }    
   }
@@ -276,6 +298,9 @@ function renderDrone(){
     drone.x = drone.nextX;
     drone.y = drone.nextY;
     
+    //update bounds to move with drone
+    drone.setBounds(drone.x,drone.y,drone.width, drone.height);
+    
     if(drone.up){
         movePropellors();
     }
@@ -285,10 +310,30 @@ function renderDrone(){
 
 // --------------------- collision detection ---------------------- //
 
-//detects a collision and returns the object hit
-function detectCollision(target){
+//detects a collision between drone/package and returns the object hit
+function detectCollision(){
     
-    //var pt =
+    var i;
+    var objectBounds;
+    var droneBounds = drone.getBounds();
+    
+    
+    for(i = 0; i < gameObjects.length; i++){
+        
+        //get each game object from array
+        var current = gameObjects[i];
+        
+        //get bounds of each object in its local coordinate system
+        objectBounds = current.getBounds();
+        
+        
+        if(droneBounds.intersects(objectBounds)){
+            //alert("collision: " + current.hazard)
+        }
+        
+        
+    }
+    
 }
 
 
