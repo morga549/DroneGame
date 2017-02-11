@@ -16,6 +16,7 @@ var d_beginFillPropellorR; //right side of propellor
 
 
 var gameOver = false;
+var courseOver = false;
 const A_KEY = 65;
 const D_KEY = 68;
 const ESC_KEY = 27;
@@ -165,7 +166,7 @@ function addPackage(){
     package.setBounds(package.x, package.y, package.width, package.height);
     
     //dynamically injected property
-    package.hazard = false;     //whether object will damage drone/package
+    package.hazard = true;     //whether object will damage drone/package
     package.grabbed = false;    //whether the drone has 'picked up' the package
     
     //add to stage
@@ -180,7 +181,7 @@ function addPackage(){
 // --------------------------- game mechanics ----------------------------- //
 
   function runGame(e) {
-      if (!e.paused && !gameOver) {
+      if (!e.paused && !courseOver) {
           if( !drone.landed){   //only update drone if drone is moving
               updateDrone();
               renderDrone();
@@ -458,7 +459,8 @@ function renderDrone(){
 }
 
 function destroyDrone(){
-    alert("Drone is destroyed!");
+    courseOver = true;
+    alert("Drone is destroyed! Course Must Be Retried.");
 }
 
 
