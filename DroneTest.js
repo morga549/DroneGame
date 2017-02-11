@@ -119,15 +119,17 @@ function addDrone() { //alert("addDrone()")
     drone = new createjs.Shape(d);
     drone.x = drone.y = 50;
     drone.width = 100;
-    drone.height = 31;
+    drone.height = 33;
     
     //set bounds
     drone.setBounds(drone.x,drone.y,drone.width,drone.height);
+    //alert(drone.getBounds());
     
     //dynamically injected property
     drone.up = false;       //whether drone is flying upward
     drone.landed = false;   //whether drone has landed on a surface
     drone.carrying = false; //whether drone is carrying The Package
+    drone.inGrabPad = false;  //whether The Package is intersecting grabbing pad
     
     //add to stage
     stage.addChild(drone);
@@ -152,7 +154,7 @@ function addPackage(){
     
     //create shape object
     package = new createjs.Shape(p);
-    package.x = 70;
+    package.x = 200;
     package.y = 150;
     package.width = 40;
     package.height = 40;
@@ -178,7 +180,6 @@ function addPackage(){
 
   function runGame(e) {
       if (!e.paused) {
-          detectCollision();
           updateDroneX();
           updateDroneY();
           renderDrone();
@@ -254,15 +255,89 @@ function moveDown(e){ //alert("moveDroneY()");
 function updateDroneX(){
     
     var nextX = drone.x;
-    if(aKeyDown && !drone.landed){
-        nextX = drone.x - 1;
+    var nextBounds = drone.getBounds();
+    
+    if(aKeyDown && !drone.landed){  //drone is moving to the left
         
-        if(nextX < 0){  //offscreen to the left //??collision detection
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        nextX = drone.x - 1;
+        nextBounds.x -= 1; //update bounds
+        
+        
+        //collision detection
+        var collisionObject = detectCollision(nextBounds);
+        if(collisionObject !== "none"){    //drone collided with object on left
+            //alert("collision: " + collisionObject.name);
+            
+            //get the bounds of the object
+            var objectBounds = collisionObject.getBounds();
+            
+            //get right corner x value of collision object
+            var rightCorner = objectBounds.x + objectBounds.width;
+            
+            //set drone nextX to this value
+            nextX = rightCorner;
+            //alert(nextX);
+        }
+        
+        //edge of screen detection
+        if(nextX < 0){  //offscreen to the left
             nextX = 0;
         }
     }
-    else if(dKeyDown && !drone.landed) {
+    else if(dKeyDown && !drone.landed) { //drone is moving to the right
+        
         nextX = drone.x + 1;
+        nextBounds.x += 1; //update bounds
+        
+        //collision detection
+        var collisionObject = detectCollision(nextBounds);
+        if(collisionObject !== "none"){    //drone collided with object on left
+            
+            //get the bounds of the object
+            var objectBounds = collisionObject.getBounds();
+            
+            //get left corner x value of collision object
+            var leftCorner = objectBounds.x;
+            
+            //set drone nextX to this value
+            nextX = leftCorner - drone.width;
+            //alert(nextX);
+        }
+
+        //edge of screen detection
         if(nextX > stage.canvas.width - drone.width) {
             nextX = stage.canvas.width - drone.width;
         }
@@ -274,17 +349,52 @@ function updateDroneX(){
 function updateDroneY(){//alert(!drone.up);
     
     var nextY = drone.y;
+    var nextBounds = drone.getBounds();
+    
     if(!drone.up){ //drone is falling
         nextY = drone.y + 1;
+        nextBounds.y += 1;
         
+        //collision detection
+        var collisionObject = detectCollision(nextBounds);
+        if(collisionObject !== "none"){    //drone collided with object on bottom
+            
+            //get the bounds of the object
+            var objectBounds = collisionObject.getBounds();
+            
+            //get top y value of collision object
+            var top = objectBounds.y;
+            
+            //set drone nextY to this value
+            nextY = top - drone.height;
+            drone.landed = true;
+        }
+
+        //edge of screen detection
         if(nextY > stage.canvas.height - drone.height){
             nextY = stage.canvas.height - drone.height;
             drone.landed = true;
         }
     }
-    else{
+    else{   //drone is rising
         nextY = drone.y - 1;
+        nextBounds.y -= 1;
         
+        //collision detection
+        var collisionObject = detectCollision(nextBounds);
+        if(collisionObject !== "none"){    //drone collided with object on bottom
+            
+            //get the bounds of the object
+            var objectBounds = collisionObject.getBounds();
+            
+            //get bottom y value of collision object
+            var bottom = objectBounds.y + objectBounds.height;
+            
+            //set drone nextY to this value
+            nextY = bottom;
+        }
+        
+        //edge of screen detection
         if(nextY < 0){
             nextY = 0;
         }
@@ -310,13 +420,12 @@ function renderDrone(){
 
 // --------------------- collision detection ---------------------- //
 
-//detects a collision between drone/package and returns the object hit
-function detectCollision(){
+//detects a collision between target and a game object and returns the object hit
+function detectCollision(targetBounds){
     
     var i;
     var objectBounds;
-    var droneBounds = drone.getBounds();
-    
+    //alert(targetBounds);
     
     for(i = 0; i < gameObjects.length; i++){
         
@@ -327,13 +436,13 @@ function detectCollision(){
         objectBounds = current.getBounds();
         
         
-        if(droneBounds.intersects(objectBounds)){
-            //alert("collision: " + current.hazard)
+        //determine whether two objects intersect
+        if(targetBounds.intersects(objectBounds)){
+            return current;
         }
-        
-        
     }
     
+    return "none";  //no collision detected
 }
 
 
