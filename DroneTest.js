@@ -95,6 +95,21 @@ function addDrone() { //alert("addDrone()")
     d.endFill();
     d.endStroke();
     
+    //legs
+    d.beginFill("grey");
+    d.moveTo(10,20);    //left leg
+    d.lineTo(0,27);
+    d.lineTo(0,33);
+    d.lineTo(2,33);
+    d.lineTo(2,28);
+    d.lineTo(13.5,20);
+    d.moveTo(90,20);    //right leg
+    d.lineTo(100,27);
+    d.lineTo(100,33);
+    d.lineTo(98,33);
+    d.lineTo(98,28);
+    d.lineTo(86.5,20);
+    
     //body
     d.beginFill("red");
     d_beginFillBody = d.command;
