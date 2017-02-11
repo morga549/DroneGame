@@ -2,9 +2,13 @@
 
 var queue;  // LoadQueue
 var stage;  // Stage
-var drone;
-var aKeyDown, dKeyDown;
+var drone;  //Junior the Drone
+var package;    //The Package
+var aKeyDown, dKeyDown, escKeyDown, spacebarDown;
+var gameObjects = [];   //contains all game objects
 
+
+//drone customization
 var d_beginFillBody;
 var d_beginFillPropellorL; //left side of propellor
 var d_beginFillPropellorR; //right side of propellor
@@ -13,6 +17,8 @@ var d_beginFillPropellorR; //right side of propellor
 
 const A_KEY = 65;
 const D_KEY = 68;
+const ESC_KEY = 27;
+const SPACEBAR = 32;
 
 
 // --------------------- startup functions ----------------------//
@@ -33,12 +39,12 @@ const D_KEY = 68;
 
       //background
       addSky();
+
+      //game objects
+      addPackage();
       
       //drone
       addDrone();
-      
-      //game objects
-      addPackage();
       
 
       //ticker
@@ -46,8 +52,8 @@ const D_KEY = 68;
       createjs.Ticker.addEventListener("tick", runGame)
       
       //handle keys
-      window.onkeydown = moveDroneX;
-      window.onkeyup = stopDroneX;
+      window.onkeydown = detectKey;
+      window.onkeyup = removeKey;
       window.onmousedown = moveUp;
       window.onmouseup = moveDown;
   }
@@ -64,8 +70,9 @@ function addSky(){ //alert("addSky()")
 }
 
 function addDrone() { //alert("addDrone()")
-    var d = new createjs.Graphics();
     
+    //create graphics object
+    var d = new createjs.Graphics();
     
     //propellors
     d.beginFill("lightgrey");
@@ -104,6 +111,9 @@ function addDrone() { //alert("addDrone()")
     d.lineTo(10,20);
     d.lineTo(10,12);
     
+    //create grabbing pad
+    d.beginFill("black");
+    d.drawRect(38,31,24,2);
     
     //create shape object
     drone = new createjs.Shape(d);
@@ -120,7 +130,27 @@ function addDrone() { //alert("addDrone()")
 }
 
 function addPackage(){
+    //create graphics object
+    var p = new createjs.Graphics();
     
+    p.beginFill("#aa8e67");
+    p.drawRect(0,0,40,40);
+    
+    p.beginFill("#e1dcd5");
+    p.drawRect(0,17,40,6);
+    p.drawRect(17,0,6,40);
+    p.endFill();
+    
+    p.beginStroke("black");
+    p.drawRect(0,0,40,40);
+    
+    //create shape object
+    package = new createjs.Shape(p);
+    package.x = package.y = 400,400;
+    
+    //add to stage
+    stage.addChild(package);
+    stage.update();
 }
 
 
@@ -155,7 +185,7 @@ function movePropellors(){
     }
 }
 
-function moveDroneX(e){
+function detectKey(e){
     e = !e ? window.event : e;  //if event is not event, get window.event;
     
     switch(e.keyCode) {
@@ -165,10 +195,16 @@ function moveDroneX(e){
         case D_KEY:
             dKeyDown = true;
             break;
+        case ESC_KEY:
+            pauseGame();
+            break;
+        case SPACEBAR:
+            spacebarDown = true;
+            break;
     }
 }
 
-function stopDroneX(e){
+function removeKey(e){
     e = !e ? window.event : e;  //if event is not event, get window.event;
     
     switch(e.keyCode) {
@@ -249,7 +285,11 @@ function renderDrone(){
 
 // --------------------- collision detection ---------------------- //
 
-
+//detects a collision and returns the object hit
+function detectCollision(target){
+    
+    //var pt =
+}
 
 
 
