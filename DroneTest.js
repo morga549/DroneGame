@@ -148,6 +148,7 @@ function addDrone() { //alert("addDrone()")
     drone.landed = false;   //whether drone has landed on a surface
     drone.carrying = false; //whether drone is carrying The Package
     drone.inGrabPad = false;  //whether The Package is intersecting grabbing pad
+    drone.speed = 1 ;    //how fast the drone moves
     
     //add to stage
     stage.addChild(drone);
@@ -172,10 +173,10 @@ function addPackage(){
     
     //create shape object
     package = new createjs.Shape(p);
-    package.x = 200;
-    package.y = 150;
     package.width = 40;
     package.height = 40;
+    package.x = 200;
+    package.y = stage.canvas.height-package.height;
     package.name = "package";
     
     //set bounds
@@ -185,7 +186,7 @@ function addPackage(){
     package.hazard = false;     //whether object will damage drone/package
     package.carried = false;    //whether the drone has 'picked up' the package
     package.landed = false;     //whether the package is on a platform
-    package.direction = -1;      //1 means moving right, -1 means moving left
+    package.direction = 0;      //1 means moving right, -1 means moving left
     
     //add to stage
     stage.addChild(package);
@@ -260,6 +261,11 @@ function addWalls(){
               updatePackage();
               renderPackage();
           }
+          if(spacebarDown){
+              
+              grabRelease();
+              spacebarDown = false;
+          }
           stage.update();
       }
   }
@@ -319,6 +325,9 @@ function moveUp(e){ //alert("moveDroneY()");
     drone.up = true;
     drone.landed = false;
     
+    if(package.carried){
+        package.landed = false;
+    }
 }
 
 function moveDown(e){ //alert("moveDroneY()");
@@ -340,25 +349,25 @@ function updateDrone(){
     //horizontal
     if(aKeyDown && !drone.landed){  //drone is moving to the left
         
-        nextX = drone.x - 1;
-        nextBounds.x -= 1;
+        nextX = drone.x - drone.speed;
+        nextBounds.x -= drone.speed;
     }
     else if(dKeyDown && !drone.landed) { //drone is moving to the right
         
-        nextX = drone.x + 1;
-        nextBounds.x += 1; //update bounds
+        nextX = drone.x + drone.speed;
+        nextBounds.x += drone.speed; //update bounds
     }
     
     //vertical
     if(!drone.up && !drone.landed){ //drone is falling
         
-        nextY = drone.y + 1;
-        nextBounds.y += 1;
+        nextY = drone.y + drone.speed;
+        nextBounds.y += drone.speed;
     }
     else if( !drone.landed){         //drone is rising
         
-        nextY = drone.y - 1;
-        nextBounds.y -= 1;
+        nextY = drone.y - drone.speed;
+        nextBounds.y -= drone.speed;
     }
         
     
@@ -521,6 +530,8 @@ function updateDrone(){
     drone.nextX = nextX;    //dynamically injected property
     drone.nextY = nextY;
     
+    mousedown = mouseup = false;  //??reset? //tried aKeyDown and dKeyDown but shaky
+    
 }
 
 
@@ -587,32 +598,39 @@ function updatePackage(){
     
     //determine next position for package
     if(package.carried) {//if package is being carried by drone
+        //alert("carried");
+        
         //horizontal
         if(aKeyDown && !package.landed){  //drone is moving to the left
-            nextX = package.x - 1;
-            nextBounds.x -= 1;
+            nextX = package.x - drone.speed;
+            nextBounds.x -= drone.speed;
             package.direction = -1; //package moving left
+            //alert("-1");
         }
         else if(dKeyDown && !package.landed) { //drone is moving to the right
-            
-            nextX = package.x + 1;
-            nextBounds.x += 1; //update bounds
+            nextX = package.x + drone.speed;
+            nextBounds.x += drone.speed; //update bounds
             package.direction = 1;  //package moving right
+            //alert("1");
         }
-        
+        else if(!aKeyDown && !dKeyDown && !package.landed){//drone move down/up only
+            package.direction = 0;  //package moving straight down/up
+            //alert("0");
+        }
         //vertical
         if(!drone.up && !package.landed){ //drone is falling
             
-            nextY = package.y + 1;
-            nextBounds.y += 1;
+            nextY = package.y + drone.speed;
+            nextBounds.y += drone.speed;
         }
         else if( !package.landed){         //drone is rising
             
-            nextY = package.y - 1;
-            nextBounds.y -= 1;
+            nextY = package.y - drone.speed;
+            nextBounds.y -= drone.speed;
         }
     }
     else { //package is not being carried
+        //alert("not");
         //horizontal
         if(!package.landed){
             
@@ -623,38 +641,32 @@ function updatePackage(){
         //vertical
         if(!package.landed){ //package is falling
             
-            nextY = package.y + 1;
-            nextBounds.y += 1;
+            nextY = package.y + drone.speed;
+            nextBounds.y += drone.speed;
         }
     }
     
     
     //perform edge of screen detection
     //horizontal
-    if(package.direction < 0 ) {
-        if(nextX < 0){  //offscreen to the left
-            nextX = 0;
-            package.direction *= -1;    //bounce off
-        }
+    if(nextX < 0){  //offscreen to the left
+        //alert("left");
+        nextX = 0;
+        package.direction *= -1;    //bounce off
     }
-    else if(package.direction > 0) {
-        if(nextX > stage.canvas.width - package.width) {
-            nextX = stage.canvas.width - package.width;
-            package.direction *= -1;    //bounce off
-        }
+    if(nextX > stage.canvas.width - package.width) {
+        //alert("right");
+        nextX = stage.canvas.width - package.width;
+        package.direction *= -1;    //bounce off
     }
     
     //vertical
-    if(!package.landed){
-        if(nextY > stage.canvas.height - package.height){
-            nextY = stage.canvas.height - package.height;
-            package.landed = true;
-        }
+    if(nextY > stage.canvas.height - package.height){
+        nextY = stage.canvas.height - package.height;
+        package.landed = true;
     }
-    else {
-        if(nextY < 0){
-            nextY = 0;
-        }
+    if(nextY < 0){
+        nextY = 0;
     }
     
     
@@ -674,6 +686,14 @@ function renderPackage(){
 }
 
 
+function grabRelease(){
+    //check for collision between Drone's package grabbing region and bounds of The Package. If there is a collision, and Drone is not yet carrying the package, carry the package. If the Drone is carrying the package, release the package.
+    
+    //test
+    package.carried = !package.carried;
+    //alert("carried");
+    
+}
 
 
 
