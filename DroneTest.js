@@ -253,6 +253,11 @@ function addWalls(){
 
   function runGame(e) {
       if (!e.paused && !courseOver) {
+          if(spacebarDown){
+              
+              grabRelease();
+              spacebarDown = false;
+          }
           if( !drone.landed){   //only update drone if drone is moving
               updateDrone();
               renderDrone();
@@ -260,11 +265,6 @@ function addWalls(){
           if(!package.landed){
               updatePackage();
               renderPackage();
-          }
-          if(spacebarDown){
-              
-              grabRelease();
-              spacebarDown = false;
           }
           stage.update();
       }
