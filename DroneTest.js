@@ -689,9 +689,34 @@ function renderPackage(){
 function grabRelease(){
     //check for collision between Drone's package grabbing region and bounds of The Package. If there is a collision, and Drone is not yet carrying the package, carry the package. If the Drone is carrying the package, release the package.
     
-    //test
-    package.carried = !package.carried;
-    //alert("carried");
+    if(package.carried){
+        package.carried = false;
+    }
+    else {
+        
+        //get bounds of drone
+        var dBounds = drone.getBounds();
+        var dPadX1 = (dBounds.x + 38);  //lower left corner
+        var dPadX2 = (dBounds.x + 62);    //lower right corner
+        var dPadY = (dBounds.y + dBounds.height);   //bottom
+        
+        //get bounds of Package
+        var pBounds = package.getBounds();
+        
+        
+        var inXRange = pBounds.x <= dPadX1 && (pBounds.x + pBounds.width) >= dPadX2;
+        var inYRange = pBounds.y === dPadY;
+        
+        //check whether Package is in the correct position range relative to Drone
+        if( inXRange && inYRange){
+            //alert("can pick up!");
+            package.carried = true;
+        }
+        
+        //alert("not in range!\ndPadX1,dPadX2: " + dPadX1 + "," + dPadX2 + "\npBounds.x,pBounds.x + pBounds.width: " + pBounds.x + "," + (pBounds.x + pBounds.width));
+        
+    }
+
     
 }
 
