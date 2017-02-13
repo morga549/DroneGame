@@ -276,9 +276,15 @@ function removeKey(e){ //alert("removeKey()");
 
 //---------------------- Collision Detection -------------------------//
 
-function detectCollision(target){ //alert("detectCollision()");
+function detectCollision(target, nextX, nextY){ //alert("detectCollision()");
     
-    var i,objectBounds;
+    var i,objectBounds, targetBounds;
+    
+    //get next bounds of target
+    targetBounds = target.getBounds();
+    targetBounds.x = nextX;
+    targetBounds.y = nextY;
+    
     for(i = 0; i < gameObjects.length; i++){ //check each object in array
         
         //get bounds of each object in its local coordinate system
@@ -286,7 +292,7 @@ function detectCollision(target){ //alert("detectCollision()");
         objectBounds = current.getBounds();
         
         //determine whether two objects intersect
-        if(target.getBounds().intersects(objectBounds)){
+        if(targetBounds.intersects(objectBounds)){
             return current; //stop checking for other collisions
         }
     }
@@ -295,7 +301,7 @@ function detectCollision(target){ //alert("detectCollision()");
 
 
 function revisePosition(target, cObject, nextX, nextY){ //alert("revisePosition()");
-    alert(target.direction);
+    
     var pt = new createjs.Point(0,0); //used to store revised x,y position
     
     //flags indicate relationship between target and collided object
@@ -330,12 +336,12 @@ function revisePosition(target, cObject, nextX, nextY){ //alert("revisePosition(
     if(above && left){
         pt.x = cLeft - target.width;
         pt.y = nextY;
-        target.direction *= -0.5;   //bounce
+        target.direction *= -0.25;   //bounce
     }
     else if(above && right){
         pt.x = cRight;
         pt.y = nextY;
-        target.direction *= -0.5;   //bounce
+        target.direction *= -0.25;   //bounce
     }
     else if(above){
         pt.x = nextX;
@@ -345,12 +351,12 @@ function revisePosition(target, cObject, nextX, nextY){ //alert("revisePosition(
     else if(below && left){
         pt.x = cLeft - target.width;
         pt.y = nextY;
-        target.direction *= -0.5;   //bounce
+        target.direction *= -0.25;   //bounce
     }
     else if(below && right){
         pt.x = cRight;
         pt.y = nextY;
-        target.direction *= -0.5;   //bounce
+        target.direction *= -0.25;   //bounce
     }
     else if(below){
         pt.x = nextX;
@@ -359,12 +365,12 @@ function revisePosition(target, cObject, nextX, nextY){ //alert("revisePosition(
     else if(left){
         pt.x = cLeft - target.width;
         pt.y = nextY;
-        target.direction *= -0.5;
+        target.direction *= -0.25;
     }
     else if(right){
         pt.x = cRight;
         pt.y = nextY;
-        target.direction *= -0.5;
+        target.direction *= -0.25;
     }
     
     return pt;      //return the x,y position that target should be moved to
@@ -380,12 +386,12 @@ function detectEdgeOfFrame(target, nextX, nextY){ //alert("detectEdgeOfFrame()")
     if(nextX < 0){
         
         pt.x = 0;
-        target.direction *= -1;     //bounce
+        target.direction *= -0.25;     //bounce
     }
     else if(nextX > stage.canvas.width - target.width){
         
         pt.x = stage.canvas.width - package.width;
-        target.direction *= -1;     //bounce
+        target.direction *= -0.25;     //bounce
     }
     //vertical
     if(nextY > stage.canvas.height - target.height){
@@ -458,53 +464,25 @@ function drop(){ //alert("drop()");
 
 // ----------------------update / rendering --------------------------//
 
-//??needs rewriting so it checks the future position of each of the objects inside
-//need to convert to global coordinates to do so
-function updateContainer(){ //alert("updateContainer()");
-    
-    dContainer.direction = 0;   //reset
-    
-    //determine next position of container
-    var nextX = dContainer.x;
-    if(aKeyDown){
-        dContainer.direction = -1;
-        nextX = dContainer.x + (dContainer.speed * dContainer.direction);
-    }
-    else if(dKeyDown){
-        dContainer.direction = 1;
-        nextX = dContainer.x + (dContainer.speed * dContainer.direction);
-    }
-    dContainer.nextX = nextX;
-}
-
-function renderContainer(){ //alert("renderContainer()");
-    dContainer.x = dContainer.nextX;
-}
-
-
-
+//used if package is moving on its own
 function updatePackage(){ //alert("updatePackage()");
-    var cObject, cBounds;    //collision object, collision bounds
-    var nextBounds = package.getBounds();   //package bounds
     
-    //determine next position
+    var revisedPt; //x,y values needed to adjust after collision / edge of frame
+    
+    //calculate next position
     var nextX = package.x + (package.speed * package.direction);
-    var nextY = package.y + package.speed;
-    nextBounds.x = nextX;
-    nextBounds.y = nextY;
+    var nextY = package.y + package.speed;  //only falling
+    //alert(nextX +"," +nextY);
     
-    //collision detection based on that next position
-    cObject = detectCollision(package);
+    //perform collision detection based on that next position
+    var cObject = detectCollision(package, nextX, nextY); //object collided with
     if(cObject !== "none" && cObject.hazard) {  //hit a hazard
         
-        alert("hit hazard. restart course.");
+        alert("hit hazard. must restart course.");
     }
-    else if( cObject !== "none"){   //hit a neutral
+    else if( cObject !== "none"){               //hit a neutral
         
-        cBounds = cObject.getBounds();
-        //alert("hit neutral: " + cObject.name);
-        
-        //determine revised position based on collision type (top, side)
+        //determine revised position based on collision type
         revisedPt = revisePosition(package, cObject, nextX, nextY);
         nextX = revisedPt.x;
         nextY = revisedPt.y;
@@ -534,6 +512,30 @@ function renderPackage(){ //alert("renderPackage()");
     package.setBounds(package.x, package.y, package.width, package.height);
 }
 
+
+
+//??needs rewriting so it checks the future position of each of the objects inside
+//need to convert to global coordinates to do so
+function updateContainer(){ //alert("updateContainer()");
+    
+    dContainer.direction = 0;   //reset
+    
+    //determine next position of container
+    var nextX = dContainer.x;
+    if(aKeyDown){
+        dContainer.direction = -1;
+        nextX = dContainer.x + (dContainer.speed * dContainer.direction);
+    }
+    else if(dKeyDown){
+        dContainer.direction = 1;
+        nextX = dContainer.x + (dContainer.speed * dContainer.direction);
+    }
+    dContainer.nextX = nextX;
+}
+
+function renderContainer(){ //alert("renderContainer()");
+    dContainer.x = dContainer.nextX;
+}
 
 // ---------------------- Animation ----------------------- //
 function movePropellers(){ //alert("movePropellers()");
