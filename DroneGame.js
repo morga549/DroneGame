@@ -511,7 +511,7 @@ function renderPackage(){ //alert("renderPackage()");
 }
 
 
-
+//test
 //??needs rewriting so it checks the future position of each of the objects inside
 //need to convert to global coordinates to do so
 function updateContainer(){ //alert("updateContainer()");
