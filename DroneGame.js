@@ -9,6 +9,8 @@ var gameObjects = [];   //contains all game objects not in dContainer
 
 var aKeyDown, dKeyDown, escKeyDown, spacebarDown = false;   //keyboard input flags
 var gameOver = courseOver = false;
+var droneHomeX, droneHomeY;   //starting position for dContainer/drone in course
+var packgeHomeX, packageHomeY;  //starting position for package in course
 
 //drone customization
 var d_beginFillBody;
@@ -34,20 +36,26 @@ function load() { //alert("load()");
 function init() { //alert("init()");
     
     stage = new createjs.Stage("canvas");
+    
     buildGameObjects();
     startGame();
 }
 
 
 function buildGameObjects(){//alert("buildGameObjects()");
+
+    droneHomeX = 75;
+    droneHomeY = 75;
+    packageHomeX = 100;
+    packageHomeY = stage.canvas.height-40;
     
     //build all objects
     buildBackground();
-    buildLine();        //??temp
+    buildDrone();           //drone before container for proper container sizing
     buildContainer();
-    buildDrone();
     buildWalls();
     buildPackage();
+    buildLine();            //??temp
     
     //Add to Stage
     stage.addChild(sky, dContainer, line, package, wall1);
@@ -80,25 +88,6 @@ function buildBackground(){//alert("buildBackground());
     sky.x = sky.y = 0;
 }
 
-function buildContainer() { //alert("buildContainer()");
-    dContainer = new createjs.Container();
-    dContainer.x = dContainer.nextX = 75;
-    dContainer.y = dContainer.nextY = 75;
-    dContainer.speed = 1;
-    dContainer.direction = 0;
-    dContainer.landed = false;
-}
-
-function buildLine(){
-    //Graphics
-    var l = new createjs.Graphics();
-                     
-    l.beginStroke("black").drawRect(0,0,285,141);
-    
-    //Shape
-    line = new createjs.Shape(l);
-}
-
 function buildDrone() { //alert("buildDrone()");
     
     //create graphics object
@@ -127,7 +116,7 @@ function buildDrone() { //alert("buildDrone()");
     
     //body
     d.beginFill("red");
-    d_beginFillBody = d.command;
+    d_beginFillBody = d.command; //store for later
     d.beginStroke("black").moveTo(10,12).lineTo(20,12).lineTo(40,7).lineTo(60,7).lineTo(80,12).lineTo(90,12).lineTo(90,20).lineTo(65,22).lineTo(62,31).lineTo(38,31).lineTo(35,22).lineTo(10,20).lineTo(10,12);
     
     //grabbing pad, area to be positioned on package in order to pick it up
@@ -143,54 +132,59 @@ function buildDrone() { //alert("buildDrone()");
     
     //set bounds
     drone.setBounds(drone.x,drone.y,drone.width,drone.height);
+}
+
+function buildContainer() { //alert("buildContainer()");
     
-    //add to dContainer
+    //Container
+    dContainer = new createjs.Container();
+    dContainer.x = dContainer.nextX = droneHomeX;
+    dContainer.y = dContainer.nextY = (droneHomeY - drone.height);
+    dContainer.speed = 1;
+    dContainer.direction = 0;
+    dContainer.landed = false;
+    
+    //add drone to dContainer
     dContainer.addChild(drone);
+    
+    //set bounds based on contents (i.e. drone)
+    dContainer.setBounds(dContainer.x, dContainer.y, drone.width, drone.height);
+}
+
+function buildLine(){ //??temp function
+    var l = new createjs.Graphics();
+    l.beginStroke("black").drawRect(0,0,75,(75 - drone.height));
+    line = new createjs.Shape(l);
 }
 
 function buildPackage(){ //alert("buildPackage());
     
     //create graphics object
-    var p = new createjs.Graphics();
-    
-    p.beginFill("#aa8e67");
-    p.drawRect(0,0,40,40);
-    
-    p.beginFill("#e1dcd5");
-    p.drawRect(0,17,40,6);
-    p.drawRect(17,0,6,40);
-    p.endFill();
-    
-    p.beginStroke("black");
-    p.drawRect(0,0,40,40);
-    
-    //create shape object
-    package = new createjs.Shape(p);
+    package = new createjs.Shape();
     package.width = package.height = 40;
-    package.x = package.nextX = 105;
-    package.y = package.nextY = stage.canvas.height-package.height;
+    package.x = package.nextX = packageHomeX;
+    package.y = package.nextY = packageHomeY;
     package.name = "package";
     package.hazard = false;     //whether object will damage drone/package
     package.landed = true;     //whether the package is on a platform
-    package.direction = 0;      //1 = moving right, -1 = moving left, 0 = straight down
+    package.direction = 0; //1 = moving right, -1 = moving left, 0 = straight down
     package.speed = 0;
     
+    //graphics
+    package.graphics.beginFill("#aa8e67").drawRect(0,0,package.width,package.height);
+    package.graphics.beginFill("#e1dcd5").drawRect(0,17,package.width,6).drawRect(17,0,6,package.height).endFill();
+    package.graphics.beginStroke("black").drawRect(0,0,package.width,package.height);
+
     //set bounds
     package.setBounds(package.x, package.y, package.width, package.height);
-    
-    //add to stage
-    stage.addChild(package);
-    stage.update();
-    
-    //add to gameObject array
-    gameObjects.push(package);
 }
 
 function buildWalls(){ //alert("buildWalls()");
+    
+    //wall1
     //create graphics object
     var w = new createjs.Graphics();
-    w.beginFill("black");
-    w.drawRect(0,0,10,250);
+    w.beginFill("black").drawRect(0,0,10,250);
     
     //create shape object
     wall1 = new createjs.Shape(w);
@@ -203,15 +197,11 @@ function buildWalls(){ //alert("buildWalls()");
     
     //set bounds
     wall1.setBounds(wall1.x, wall1.y, wall1.width, wall1.height);
-   
-    
-    //add to stage
-    stage.addChild(wall1);
-    stage.update();
-    
-    //add to array
-    gameObjects.push(wall1);
 }
+
+
+
+
 
 // ------------------Game Mechanics --------------------//
 
