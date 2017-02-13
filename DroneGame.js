@@ -3,13 +3,12 @@ const D_KEY = 68;
 const ESC_KEY = 27;
 const SPACEBAR = 32;
 
-var queue, stage;
-var dContainer, drone, package, wall1, line;  //game objects
+var queue, stage; //createjs objects
+var sky, dContainer, drone, package, wall1, line;  //game objects
 var gameObjects = [];   //contains all game objects not in dContainer
 
-var aKeyDown, dKeyDown, escKeyDown, spacebarDown = false;
-var gameOver = false;
-var courseOver = false;
+var aKeyDown, dKeyDown, escKeyDown, spacebarDown = false;   //keyboard input flags
+var gameOver = courseOver = false;
 
 //drone customization
 var d_beginFillBody;
@@ -33,33 +32,52 @@ function load() { //alert("load()");
 }
 
 function init() { //alert("init()");
+    
     stage = new createjs.Stage("canvas");
+    buildGameObjects();
+    startGame();
+}
 
-    //Game Objects
+
+function buildGameObjects(){//alert("buildGameObjects()");
+    
+    //build all objects
     buildBackground();
     buildLine();        //??temp
     buildContainer();
     buildDrone();
     buildWalls();
-    buildPackage(); //do last, to add to array last
+    buildPackage();
+    
+    //Add to Stage
+    stage.addChild(sky, dContainer, line, package, wall1);
+    
+    //Add to array
+    gameObjects.push(package,wall1);
+    
+    stage.update();
+}
 
+function startGame(){ //alert("startGame()");
     //Ticker
     createjs.Ticker.framerate = 60;
     createjs.Ticker.addEventListener("tick", runGame)
-
-    //handle keys
+    
+    //listen for key / mouse events
     window.onkeydown  = detectKey;
     window.onkeyup = removeKey;
     //window.onmousedown = moveUp;
     //window.onmouseup = moveDown;
 }
 
+
+
+// --------------------- game objects ----------------------//
+
 function buildBackground(){//alert("buildBackground());
     var image = queue.getResult("sky1");
     sky = new createjs.Bitmap(image);
     sky.x = sky.y = 0;
-    stage.addChild(sky);
-    stage.update();
 }
 
 function buildContainer() { //alert("buildContainer()");
@@ -69,19 +87,16 @@ function buildContainer() { //alert("buildContainer()");
     dContainer.speed = 1;
     dContainer.direction = 0;
     dContainer.landed = false;
-    
-    stage.addChild(dContainer);
-    stage.update();
 }
 
 function buildLine(){
+    //Graphics
     var l = new createjs.Graphics();
-    l.beginStroke("black");
-    l.drawRect(0,0,285,141);
+                     
+    l.beginStroke("black").drawRect(0,0,285,141);
     
+    //Shape
     line = new createjs.Shape(l);
-    stage.addChild(line);
-    stage.update();
 }
 
 function buildDrone() { //alert("buildDrone()");
@@ -100,50 +115,25 @@ function buildDrone() { //alert("buildDrone()");
     d.drawRect(85,0,15,4);  //right side of right propeller
     
     //shafts
-    d.beginFill("white");
-    d.beginStroke("grey");
+    d.beginFill("white").beginStroke("grey");
     d.drawRect(13,4,4,8);   //left shaft
     d.drawRect(83,4,4,8);   //right shaft
     d.endStroke();
     
     //legs
     d.beginFill("grey");
-    d.moveTo(10,20);    //left leg
-    d.lineTo(0,27);
-    d.lineTo(0,33);
-    d.lineTo(2,33);
-    d.lineTo(2,28);
-    d.lineTo(13.5,20);
-    d.moveTo(90,20);    //right leg
-    d.lineTo(100,27);
-    d.lineTo(100,33);
-    d.lineTo(98,33);
-    d.lineTo(98,28);
-    d.lineTo(86.5,20);
+    d.moveTo(10,20).lineTo(0,27).lineTo(0,33).lineTo(2,33).lineTo(2,28).lineTo(13.5,20);//left
+    d.moveTo(90,20).lineTo(100,27).lineTo(100,33).lineTo(98,33).lineTo(98,28).lineTo(86.5,20);//right
     
     //body
     d.beginFill("red");
     d_beginFillBody = d.command;
-    d.beginStroke("black");
-    d.moveTo(10,12);
-    d.lineTo(20,12);
-    d.lineTo(40,7);
-    d.lineTo(60,7);
-    d.lineTo(80,12);
-    d.lineTo(90,12);
-    d.lineTo(90,20);
-    d.lineTo(65,22);
-    d.lineTo(62,31);
-    d.lineTo(38,31);
-    d.lineTo(35,22);
-    d.lineTo(10,20);
-    d.lineTo(10,12);
+    d.beginStroke("black").moveTo(10,12).lineTo(20,12).lineTo(40,7).lineTo(60,7).lineTo(80,12).lineTo(90,12).lineTo(90,20).lineTo(65,22).lineTo(62,31).lineTo(38,31).lineTo(35,22).lineTo(10,20).lineTo(10,12);
     
-    //create grabbing pad
-    d.beginFill("black");
-    d.drawRect(38,31,24,2);
+    //grabbing pad, area to be positioned on package in order to pick it up
+    d.beginFill("black").drawRect(38,31,24,2);
     
-    //create shape object
+    //Shape
     drone = new createjs.Shape(d);
     drone.x = drone.nextX = 0;  //0 of container
     drone.y = drone.nextY = 0;  //0 of container
@@ -156,7 +146,6 @@ function buildDrone() { //alert("buildDrone()");
     
     //add to dContainer
     dContainer.addChild(drone);
-    stage.update();
 }
 
 function buildPackage(){ //alert("buildPackage());
