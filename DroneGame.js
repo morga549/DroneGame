@@ -488,18 +488,16 @@ function updatePackage(){ //alert("updatePackage()");
         nextY = revisedPt.y;
     }
     
-    //edge of frame detection based on that next position
+    //perform edge of frame detection based on that next position
     revisedPt = detectEdgeOfFrame(package, nextX, nextY);
-    if(revisedPt.x !== -100){
+    if(revisedPt.x !== -100){   //horizontal edge of frame occurred
         
         nextX = revisedPt.x;
     }
-    else if(revisedPt.y !== -100){
+    if(revisedPt.y !== -100){   //vertical edge of frame occured
         
         nextY = revisedPt.y;
     }
-    
-    
     
     //update properties
     package.nextX = nextX;
