@@ -3,13 +3,14 @@ const D_KEY = 68;
 const ESC_KEY = 27;
 const SPACEBAR = 32;
 
-var queue, stage;
-var dContainer, drone, package, wall1, line;  //game objects
+var queue, stage; //createjs objects
+var sky, dContainer, drone, package, wall1, line;  //game objects
 var gameObjects = [];   //contains all game objects not in dContainer
 
-var aKeyDown, dKeyDown, escKeyDown, spacebarDown = false;
-var gameOver = false;
-var courseOver = false;
+var aKeyDown, dKeyDown, escKeyDown, spacebarDown = false;   //keyboard input flags
+var gameOver = courseOver = false;
+var droneHomeX, droneHomeY;   //starting position for dContainer/drone in course
+var packgeHomeX, packageHomeY;  //starting position for package in course
 
 //drone customization
 var d_beginFillBody;
@@ -33,55 +34,58 @@ function load() { //alert("load()");
 }
 
 function init() { //alert("init()");
+    
     stage = new createjs.Stage("canvas");
+    
+    buildGameObjects();
+    startGame();
+}
 
-    //Game Objects
+
+function buildGameObjects(){//alert("buildGameObjects()");
+
+    droneHomeX = 75;
+    droneHomeY = 75;
+    packageHomeX = 100;
+    packageHomeY = stage.canvas.height-40;
+    
+    //build all objects
     buildBackground();
-    buildLine();        //??temp
+    buildDrone();           //drone before container for proper container sizing
     buildContainer();
-    buildDrone();
     buildWalls();
-    buildPackage(); //do last, to add to array last
+    buildPackage();
+    buildLine();            //??temp
+    
+    //Add to Stage
+    stage.addChild(sky, dContainer, line, package, wall1);
+    
+    //Add to array
+    gameObjects.push(package,wall1);
+    
+    stage.update();
+}
 
+function startGame(){ //alert("startGame()");
     //Ticker
     createjs.Ticker.framerate = 60;
-    createjs.Ticker.addEventListener("tick", runGame)
-
-    //handle keys
+    createjs.Ticker.addEventListener("tick", runGame);
+    
+    //listen for key / mouse events
     window.onkeydown  = detectKey;
     window.onkeyup = removeKey;
     //window.onmousedown = moveUp;
     //window.onmouseup = moveDown;
 }
 
+
+
+// --------------------- game objects ----------------------//
+
 function buildBackground(){//alert("buildBackground());
     var image = queue.getResult("sky1");
     sky = new createjs.Bitmap(image);
     sky.x = sky.y = 0;
-    stage.addChild(sky);
-    stage.update();
-}
-
-function buildContainer() { //alert("buildContainer()");
-    dContainer = new createjs.Container();
-    dContainer.x = dContainer.nextX = 75;
-    dContainer.y = dContainer.nextY = 75;
-    dContainer.speed = 1;
-    dContainer.direction = 0;
-    dContainer.landed = false;
-    
-    stage.addChild(dContainer);
-    stage.update();
-}
-
-function buildLine(){
-    var l = new createjs.Graphics();
-    l.beginStroke("black");
-    l.drawRect(0,0,285,141);
-    
-    line = new createjs.Shape(l);
-    stage.addChild(line);
-    stage.update();
 }
 
 function buildDrone() { //alert("buildDrone()");
@@ -100,50 +104,25 @@ function buildDrone() { //alert("buildDrone()");
     d.drawRect(85,0,15,4);  //right side of right propeller
     
     //shafts
-    d.beginFill("white");
-    d.beginStroke("grey");
+    d.beginFill("white").beginStroke("grey");
     d.drawRect(13,4,4,8);   //left shaft
     d.drawRect(83,4,4,8);   //right shaft
     d.endStroke();
     
     //legs
     d.beginFill("grey");
-    d.moveTo(10,20);    //left leg
-    d.lineTo(0,27);
-    d.lineTo(0,33);
-    d.lineTo(2,33);
-    d.lineTo(2,28);
-    d.lineTo(13.5,20);
-    d.moveTo(90,20);    //right leg
-    d.lineTo(100,27);
-    d.lineTo(100,33);
-    d.lineTo(98,33);
-    d.lineTo(98,28);
-    d.lineTo(86.5,20);
+    d.moveTo(10,20).lineTo(0,27).lineTo(0,33).lineTo(2,33).lineTo(2,28).lineTo(13.5,20);//left
+    d.moveTo(90,20).lineTo(100,27).lineTo(100,33).lineTo(98,33).lineTo(98,28).lineTo(86.5,20);//right
     
     //body
     d.beginFill("red");
-    d_beginFillBody = d.command;
-    d.beginStroke("black");
-    d.moveTo(10,12);
-    d.lineTo(20,12);
-    d.lineTo(40,7);
-    d.lineTo(60,7);
-    d.lineTo(80,12);
-    d.lineTo(90,12);
-    d.lineTo(90,20);
-    d.lineTo(65,22);
-    d.lineTo(62,31);
-    d.lineTo(38,31);
-    d.lineTo(35,22);
-    d.lineTo(10,20);
-    d.lineTo(10,12);
+    d_beginFillBody = d.command; //store for later
+    d.beginStroke("black").moveTo(10,12).lineTo(20,12).lineTo(40,7).lineTo(60,7).lineTo(80,12).lineTo(90,12).lineTo(90,20).lineTo(65,22).lineTo(62,31).lineTo(38,31).lineTo(35,22).lineTo(10,20).lineTo(10,12);
     
-    //create grabbing pad
-    d.beginFill("black");
-    d.drawRect(38,31,24,2);
+    //grabbing pad, area to be positioned on package in order to pick it up
+    d.beginFill("black").drawRect(38,31,24,2);
     
-    //create shape object
+    //Shape
     drone = new createjs.Shape(d);
     drone.x = drone.nextX = 0;  //0 of container
     drone.y = drone.nextY = 0;  //0 of container
@@ -153,55 +132,61 @@ function buildDrone() { //alert("buildDrone()");
     
     //set bounds
     drone.setBounds(drone.x,drone.y,drone.width,drone.height);
+}
+
+function buildContainer() { //alert("buildContainer()");
     
-    //add to dContainer
+    //Container
+    dContainer = new createjs.Container();
+    dContainer.x = dContainer.nextX = droneHomeX;
+    dContainer.y = dContainer.nextY = (droneHomeY - drone.height);
+    dContainer.speed = 1;
+    dContainer.direction = 0;
+    dContainer.landed = false;
+    dContainer.width = drone.width;
+    dContainer.height = drone.height;
+    
+    //add drone to dContainer
     dContainer.addChild(drone);
-    stage.update();
+    
+    //set bounds based on contents (i.e. drone)
+    dContainer.setBounds(dContainer.x, dContainer.y, dContainer.width, dContainer.height);
+}
+
+function buildLine(){ //??temp function
+    var l = new createjs.Graphics();
+    l.beginStroke("black").drawRect(0,0,75,(75 - drone.height));
+    line = new createjs.Shape(l);
 }
 
 function buildPackage(){ //alert("buildPackage());
     
     //create graphics object
-    var p = new createjs.Graphics();
-    
-    p.beginFill("#aa8e67");
-    p.drawRect(0,0,40,40);
-    
-    p.beginFill("#e1dcd5");
-    p.drawRect(0,17,40,6);
-    p.drawRect(17,0,6,40);
-    p.endFill();
-    
-    p.beginStroke("black");
-    p.drawRect(0,0,40,40);
-    
-    //create shape object
-    package = new createjs.Shape(p);
+    package = new createjs.Shape();
     package.width = package.height = 40;
-    package.x = package.nextX = 105;
-    package.y = package.nextY = stage.canvas.height-package.height;
+    package.x = package.nextX = packageHomeX;
+    package.y = package.nextY = packageHomeY;
     package.name = "package";
     package.hazard = false;     //whether object will damage drone/package
     package.landed = true;     //whether the package is on a platform
-    package.direction = 0;      //1 = moving right, -1 = moving left, 0 = straight down
+    package.direction = 0; //1 = moving right, -1 = moving left, 0 = straight down
     package.speed = 0;
     
+    //graphics
+    package.graphics.beginFill("#aa8e67").drawRect(0,0,package.width,package.height);
+    package.graphics.beginFill("#e1dcd5").drawRect(0,17,package.width,6).drawRect(17,0,6,package.height).endFill();
+    package.graphics.beginStroke("black").drawRect(0,0,package.width,package.height);
+
     //set bounds
     package.setBounds(package.x, package.y, package.width, package.height);
-    
-    //add to stage
-    stage.addChild(package);
-    stage.update();
-    
-    //add to gameObject array
-    gameObjects.push(package);
 }
 
 function buildWalls(){ //alert("buildWalls()");
+    
+    //wall1
     //create graphics object
     var w = new createjs.Graphics();
-    w.beginFill("black");
-    w.drawRect(0,0,10,250);
+    w.beginFill("black").drawRect(0,0,10,250);
     
     //create shape object
     wall1 = new createjs.Shape(w);
@@ -214,32 +199,33 @@ function buildWalls(){ //alert("buildWalls()");
     
     //set bounds
     wall1.setBounds(wall1.x, wall1.y, wall1.width, wall1.height);
-   
-    
-    //add to stage
-    stage.addChild(wall1);
-    stage.update();
-    
-    //add to array
-    gameObjects.push(wall1);
 }
+
+
+
+
 
 // ------------------Game Mechanics --------------------//
 
 function runGame(e){ //alert("runGame()");
     if(!e.paused){
-        movePropellers();
         
-        
+        //update package only if it is moving and not inside the container
         if(!package.carried && !package.landed){
             updatePackage();
             renderPackage();
         }
+        
         updateContainer();
         renderContainer();
         
         stage.update();
     }
+}
+
+
+function pauseGame() { //alert("pauseGame()");
+    createjs.Ticker.paused = !createjs.Ticker.paused;
 }
 
 function detectKey(e){ //alert("detectKey()");
@@ -286,61 +272,78 @@ function removeKey(e){ //alert("removeKey()");
     }
 }
 
-function pauseGame() { //alert("pauseGame()");
-    createjs.Ticker.paused = !createjs.Ticker.paused;
-}
 
 
-function detectCollision(target){ //alert("detectCollision()");
-    var i,objectBounds;
+//---------------------- Collision Detection -------------------------//
+
+function detectCollision(target, nextX, nextY){ //alert("detectCollision()");
+    
+    var i,objectBounds, targetBounds;
+    
+    //get next bounds of target
+    targetBounds = target.getBounds();
+    targetBounds.x = nextX;
+    targetBounds.y = nextY;
+    
     for(i = 0; i < gameObjects.length; i++){ //check each object in array
         
         //get bounds of each object in its local coordinate system
         var current = gameObjects[i];
         objectBounds = current.getBounds();
-        //alert(target.getBounds());
         
         //determine whether two objects intersect
-        if(target.getBounds().intersects(objectBounds)){
-            return current;
+        if(targetBounds.intersects(objectBounds)){
+            return current; //stop checking for other collisions
         }
     }
-    
     return "none";  //no collision detected
 }
 
+
 function revisePosition(target, cObject, nextX, nextY){ //alert("revisePosition()");
     
-    var pt = new createjs.Point(0,0);
-    var above, below, left, right = false;  //flags
+    var pt = new createjs.Point(0,0); //used to store revised x,y position
+    
+    //flags indicate relationship between target and collided object
+    var above, below, left, right = false;
 
+    //determine the edges of collided object
     var cBounds = cObject.getBounds();
     var cTop = cBounds.y;
     var cBottom = cBounds.y + cBounds.height;
     var cLeft = cBounds.x;
     var cRight = cBounds.x + cBounds.width;
     
+    
+    //determine positioning relationship between target and collided object
     //vertical
-    if(cTop >= (target.y + target.height)) {   //target is above
-        above = true;
-        //alert("top");
+    if(cTop >= (target.y + target.height)) {   //target is above collided object
+        above = true; //alert("top");
     }
-    else if( cBottom <= target.y ) {   //target is below
-        below = true;
-        //alert("below");
+    else if( cBottom <= target.y ) {   //target is below collided object
+        below = true; //alert("below");
     }
     //horizontal
-    if(cLeft >= target.x + target.width){ //target at left side
-        left = true;
-        //alert("left");
+    if(cLeft >= target.x + target.width){ //target at left side of collided object
+        left = true; //alert("left");
     }
-    else if(cRight <= target.x){ //target at right side
-        right = true;
-        //alert("right");
+    else if(cRight <= target.x){ //target at right side of collided object
+        right = true; //alert("right");
     }
     
-    //based on flags, determine next position
-    if(above){
+    //based on relationship, revise next position of target
+    //There are eight possible relationships
+    if(above && left){
+        pt.x = cLeft - target.width;
+        pt.y = nextY;
+        target.direction *= -0.25;   //bounce
+    }
+    else if(above && right){
+        pt.x = cRight;
+        pt.y = nextY;
+        target.direction *= -0.25;   //bounce
+    }
+    else if(above){
         pt.x = nextX;
         pt.y = cTop - target.height;
         target.landed = true;
@@ -348,12 +351,12 @@ function revisePosition(target, cObject, nextX, nextY){ //alert("revisePosition(
     else if(below && left){
         pt.x = cLeft - target.width;
         pt.y = nextY;
-        target.direction = 0;
+        target.direction *= -0.25;   //bounce
     }
     else if(below && right){
         pt.x = cRight;
         pt.y = nextY;
-        target.direction = 0;
+        target.direction *= -0.25;   //bounce
     }
     else if(below){
         pt.x = nextX;
@@ -362,35 +365,33 @@ function revisePosition(target, cObject, nextX, nextY){ //alert("revisePosition(
     else if(left){
         pt.x = cLeft - target.width;
         pt.y = nextY;
-        target.direction = 0;
+        target.direction *= -0.25;
     }
     else if(right){
         pt.x = cRight;
         pt.y = nextY;
-        target.direction = 0;
+        target.direction *= -0.25;
     }
     
-    return pt;
-    
+    return pt;      //return the x,y position that target should be moved to
 }
-    
+
+
 function detectEdgeOfFrame(target, nextX, nextY){ //alert("detectEdgeOfFrame()");
-    var pt = new createjs.Point(-100,-100);
+    
+    //Point used to store revised x,y position
+    var pt = new createjs.Point(-100,-100); //-100 is a flag for 'no change made'
     
     //horizontal
     if(nextX < 0){
-        pt.x = 0;
         
-        if(target.name === "package"){  //package bounces
-            target.direction *= -1;
-        }
+        pt.x = 0;
+        target.direction *= -0.25;     //bounce
     }
     else if(nextX > stage.canvas.width - target.width){
-        pt.x = stage.canvas.width - package.width;
         
-        if(target.name === "package"){  //package bounces
-            target.direction *= -1;
-        }
+        pt.x = stage.canvas.width - package.width;
+        target.direction *= -0.25;     //bounce
     }
     //vertical
     if(nextY > stage.canvas.height - target.height){
@@ -401,56 +402,114 @@ function detectEdgeOfFrame(target, nextX, nextY){ //alert("detectEdgeOfFrame()")
 }
 
 
-// ----------------------- Actions ------------------------ //
+
+
+
+// --------------------------- Actions --------------------------------- //
 
 function pickup(){ //alert("pickup()");
-    var pBounds;
-    var index = gameObjects.indexOf(package);
+    
+    var index = gameObjects.indexOf(package); //get index of package in array
     
     if(index !== -1)    //package is in the array
     {
-            gameObjects.splice(index,1);
+            gameObjects.splice(index,1);    //remove package from array
     }
-    stage.removeChild(package);
-    dContainer.addChild(package);   //add to dContainer
+    
+    //add Package to dContainer
+    dContainer.addChild(package);   //adding to dContainer removes from Stage
     
     //update properties
     package.speed = dContainer.speed;
     package.direction = dContainer.direction;
     package.carried = true;
     
-    //move to correct position
-    createjs.Tween.get(package).to({x:30, y:33}, 100, createjs.Ease.quadOut);
+    //move to correct position inside container
+    var adjustedX = (dContainer.width - package.width) /2;
+    var adjustedY = drone.height;
+    createjs.Tween.get(package).to({x:adjustedX, y:adjustedY}, 100, createjs.Ease.quadOut);
     
-    pBounds = package.getBounds();
-    pBounds.x = 30; //relative to container
-    pBounds.y = 33; //relative to container
-    //alert(pBounds);
+    //adjust bounds to match position relative to container
+    var pBounds = package.getBounds();
+    pBounds.x = package.x;
+    pBounds.y = package.y;
 }
 
 
 function drop(){ //alert("drop()");
-    //package.x, package.y is relative to dContainer and must be readjusted to stage
-    var globalPosition = package.localToGlobal(package.x-30, package.y-33);
-    var pBounds = package.getBounds();
-    package.x = package.nextX = pBounds.x = globalPosition.x;
-    package.y = package.nextY = pBounds.y = globalPosition.y;
-    //alert("drop"+ pBounds);
     
-    dContainer.removeChild(package);
-    stage.addChild(package);
+    //package.x, package.y is relative to dContainer and must be readjusted to stage
+    var adjustedX = (dContainer.width - package.width) /2;
+    var adjustedY = drone.height;
+    var globalPt = package.localToGlobal(package.x-adjustedX, package.y-adjustedY);
+    
+    //move to correct position inside stage
+    package.x = package.nextX = globalPt.x;
+    package.y = package.nextY = globalPt.y;
+    
+    //adjusts bounds to match position relative to stage
+    var pBounds = package.getBounds();
+    pBounds.x = package.x;
+    pBounds.y = package.y;
+    
+    //add Package to stage
+    stage.addChild(package);    //adding to stage removes from dContainer
     
     //update properties
     package.direction = dContainer.direction;
     package.carried = false;
-    package.landed = false; //??temp
+    package.landed = false;
+}
+
+
+// ----------------------update / rendering --------------------------//
+
+//used if package is moving on its own
+function updatePackage(){ //alert("updatePackage()");
     
-    if(package.landed){
-        gameObjects.push(package);  //add package to end of array
+    var revisedPt; //x,y values needed to adjust after collision / edge of frame
+    
+    //calculate next position
+    var nextX = package.x + (package.speed * package.direction);
+    var nextY = package.y + package.speed;  //only falling
+    //alert(nextX +"," +nextY);
+    
+    //perform collision detection based on that next position
+    var cObject = detectCollision(package, nextX, nextY); //object collided with
+    if(cObject !== "none" && cObject.hazard) {  //hit a hazard
+        
+        alert("hit hazard. must restart course.");
+    }
+    else if( cObject !== "none"){               //hit a neutral
+        
+        //determine revised position based on collision type
+        revisedPt = revisePosition(package, cObject, nextX, nextY);
+        nextX = revisedPt.x;
+        nextY = revisedPt.y;
     }
     
-    //alert("drop"+ pBounds);
+    //perform edge of frame detection based on that next position
+    revisedPt = detectEdgeOfFrame(package, nextX, nextY);
+    if(revisedPt.x !== -100){   //horizontal edge of frame occurred
+        
+        nextX = revisedPt.x;
+    }
+    if(revisedPt.y !== -100){   //vertical edge of frame occured
+        
+        nextY = revisedPt.y;
+    }
+    
+    //update properties
+    package.nextX = nextX;
+    package.nextY = nextY;
 }
+
+function renderPackage(){ //alert("renderPackage()");
+    package.x = package.nextX;
+    package.y = package.nextY;
+    package.setBounds(package.x, package.y, package.width, package.height);
+}
+
 
 
 //??needs rewriting so it checks the future position of each of the objects inside
@@ -475,60 +534,6 @@ function updateContainer(){ //alert("updateContainer()");
 function renderContainer(){ //alert("renderContainer()");
     dContainer.x = dContainer.nextX;
 }
-
-
-
-function updatePackage(){ //alert("updatePackage()");
-    var cObject, cBounds;    //collision object, collision bounds
-    var nextBounds = package.getBounds();   //package bounds
-    
-    //determine next position
-    var nextX = package.x + (package.speed * package.direction);
-    var nextY = package.y + package.speed;
-    nextBounds.x = nextX;
-    nextBounds.y = nextY;
-    
-    //collision detection based on that next position
-    cObject = detectCollision(package);
-    if(cObject !== "none" && cObject.hazard) {  //hit a hazard
-        
-        alert("hit hazard. restart course.");
-    }
-    else if( cObject !== "none"){   //hit a neutral
-        
-        cBounds = cObject.getBounds();
-        //alert("hit neutral: " + cObject.name);
-        
-        //determine revised position based on collision type (top, side)
-        revisedPt = revisePosition(package, cObject, nextX, nextY);
-        nextX = revisedPt.x;
-        nextY = revisedPt.y;
-    }
-    
-    //edge of frame detection based on that next position
-    revisedPt = detectEdgeOfFrame(package, nextX, nextY);
-    if(revisedPt.x !== -100){
-        
-        nextX = revisedPt.x;
-    }
-    else if(revisedPt.y !== -100){
-        
-        nextY = revisedPt.y;
-    }
-    
-    
-    
-    //update properties
-    package.nextX = nextX;
-    package.nextY = nextY;
-}
-
-function renderPackage(){ //alert("renderPackage()");
-    package.x = package.nextX;
-    package.y = package.nextY;
-    package.setBounds(package.x, package.y, package.width, package.height);
-}
-
 
 // ---------------------- Animation ----------------------- //
 function movePropellers(){ //alert("movePropellers()");
