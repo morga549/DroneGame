@@ -74,8 +74,8 @@ function startGame(){ //alert("startGame()");
     //listen for key / mouse events
     window.onkeydown  = detectKey;
     window.onkeyup = removeKey;
-    //window.onmousedown = moveUp;
-    //window.onmouseup = moveDown;
+    window.onmousedown = moveUp;
+    window.onmouseup = moveDown;
 }
 
 
@@ -129,6 +129,7 @@ function buildDrone() { //alert("buildDrone()");
     drone.width = 100;
     drone.height = 33;
     drone.up = false;       //whether drone is flying upward
+    drone.name = "drone";
     
     //set bounds
     drone.setBounds(drone.x,drone.y,drone.width,drone.height);
@@ -155,7 +156,7 @@ function buildContainer() { //alert("buildContainer()");
 
 function buildLine(){ //??temp function
     var l = new createjs.Graphics();
-    l.beginStroke("black").drawRect(0,0,75,(75 - drone.height));
+    l.beginStroke("black").drawRect(0,0,200,43);
     line = new createjs.Shape(l);
 }
 
@@ -191,7 +192,7 @@ function buildWalls(){ //alert("buildWalls()");
     //create shape object
     wall1 = new createjs.Shape(w);
     wall1.x = stage.canvas.width/2;
-    wall1.y = 180;
+    wall1.y = 50;
     wall1.width = 10;
     wall1.height = 250;
     wall1.name = "wall1";
@@ -272,6 +273,21 @@ function removeKey(e){ //alert("removeKey()");
     }
 }
 
+function moveUp(e){ //alert("moveUp()");
+    
+    drone.up = true;
+    drone.landed = false;
+    
+    if(package.carried) {
+        package.landed = false;
+    }
+}
+
+function moveDown(e){ //alert("moveDown()");
+    
+    drone.up = false;
+}
+
 
 
 //---------------------- Collision Detection -------------------------//
@@ -333,7 +349,7 @@ function revisePosition(target, cObject, nextX, nextY){ //alert("revisePosition(
     
     //based on relationship, revise next position of target
     //There are eight possible relationships
-    if(above && left){
+    if(above && left){ //alert("above and left");
         pt.x = cLeft - target.width;
         pt.y = nextY;
         target.direction *= -0.25;   //bounce
@@ -372,7 +388,7 @@ function revisePosition(target, cObject, nextX, nextY){ //alert("revisePosition(
         pt.y = nextY;
         target.direction *= -0.25;
     }
-    
+    //alert(pt);
     return pt;      //return the x,y position that target should be moved to
 }
 
@@ -472,7 +488,6 @@ function updatePackage(){ //alert("updatePackage()");
     //calculate next position
     var nextX = package.x + (package.speed * package.direction);
     var nextY = package.y + package.speed;  //only falling
-    //alert(nextX +"," +nextY);
     
     //perform collision detection based on that next position
     var cObject = detectCollision(package, nextX, nextY); //object collided with
@@ -482,7 +497,7 @@ function updatePackage(){ //alert("updatePackage()");
     }
     else if( cObject !== "none"){               //hit a neutral
         
-        //determine revised position based on collision type
+        //determine revised global position based on collision type
         revisedPt = revisePosition(package, cObject, nextX, nextY);
         nextX = revisedPt.x;
         nextY = revisedPt.y;
@@ -510,16 +525,85 @@ function renderPackage(){ //alert("renderPackage()");
     package.setBounds(package.x, package.y, package.width, package.height);
 }
 
+function checkChildren(){ //alert("checkChildren()");
+    
+    var shiftX, shiftY, nextX, nextY, current, cObject, globalPt;
+    var revisedPt = new createjs.Point(-100,-100);
+    
+    //for each object inside the container
+    //perform collision detection based on next position of that object
+    //stop after the first object that has a collision
+    for(i = 0; i < dContainer.numChildren;i++){
+        
+        //get child
+        current = dContainer.children[i];
+        
+        //determine if child is shifted in container
+        shiftX = current.x;
+        shiftY = current.y;
+        
+        //determine next position of current object based on properties of dContainer
+        nextX = current.x + (dContainer.speed * dContainer.direction);
+        
+        if(!drone.up){  //alert("falling");    //drone falling
+            nextY = current.y + dContainer.speed;
+        }
+        else if(drone.up){ //alert("rising"); //drone rising
+            nextY = current.y - dContainer.speed;
+        }
 
-//test
-//??needs rewriting so it checks the future position of each of the objects inside
-//need to convert to global coordinates to do so
+        
+        //shift next position to match if child is shifted in container
+        nextX -= shiftX;
+        nextY -= shiftY;
+        
+        //convert next position into global coordinate system
+        globalPt = current.localToGlobal(nextX, nextY);
+        nextX = globalPt.x;
+        nextY = globalPt.y;
+        /*
+        if(current.name === "package"){
+            alert("localToGlobal: " + globalPt + "\nglobalToLocal: " + current.globalToLocal(globalPt.x, globalPt.y));
+        }
+         */
+
+        //perform collision detection using this global next position
+        cObject = detectCollision(current, nextX, nextY);
+        
+        if(cObject !== "none" && cObject.hazard){    //hit a hazard
+            alert("hit hazard. must restart course.");
+        }
+        else if( cObject !== "none"){               //hit a neutral
+            
+            //determine revised global position based on collision type
+            revisedPt = revisePosition(current, cObject, nextX, nextY);
+            nextX = revisedPt.x;
+            nextY = revisedPt.y;
+            
+            //don't convert revised position back into local coordinate system
+            //revisedPt = current.globalToLocal(nextX,nextY);
+            //alert(revisedPt);
+            //alert(shiftX +"," + shiftY);
+            return revisedPt; //return directly without shifting back
+            //represents the next position the container should take
+            //to remove collision of child
+        }
+    }
+    
+    return revisedPt;
+}
+
+
+//??
 function updateContainer(){ //alert("updateContainer()");
     
-    dContainer.direction = 0;   //reset
+    var i, revisedPt;
     
     //determine next position of container
     var nextX = dContainer.x;
+    var nextY = dContainer.y;
+    
+    //horizontal
     if(aKeyDown){
         dContainer.direction = -1;
         nextX = dContainer.x + (dContainer.speed * dContainer.direction);
@@ -528,11 +612,36 @@ function updateContainer(){ //alert("updateContainer()");
         dContainer.direction = 1;
         nextX = dContainer.x + (dContainer.speed * dContainer.direction);
     }
+    
+    //vertical
+    if(!drone.up && !drone.landed){ //drone is falling
+        
+        nextY = dContainer.y + dContainer.speed;
+    }
+    else if( !drone.landed){         //drone is rising
+        
+        nextY = dContainer.y - dContainer.speed;
+    }
+    
+    
+    
+    //check if a child collides with an object and container position must adjust
+    revisedPt = checkChildren();
+    if(revisedPt.x !== -100 ){  //collision occurred
+        nextX = revisedPt.x;
+    }
+    if(revisedPt.y !== -100 ){ //collision occurred
+        nextY = revisedPt.y;
+    }
+    
+    
     dContainer.nextX = nextX;
+    dContainer.nextY = nextY;
 }
 
 function renderContainer(){ //alert("renderContainer()");
     dContainer.x = dContainer.nextX;
+    dContainer.y = dContainer.nextY;
 }
 
 // ---------------------- Animation ----------------------- //
