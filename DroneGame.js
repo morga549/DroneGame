@@ -217,8 +217,11 @@ function runGame(e){ //alert("runGame()");
             renderPackage();
         }
         
-        updateContainer();
-        renderContainer();
+        if(!drone.landed){
+            updateContainer();
+            renderContainer();
+        }
+        
         
         stage.update();
     }
@@ -309,6 +312,7 @@ function detectCollision(target, nextX, nextY){ //alert("detectCollision()");
         
         //determine whether two objects intersect
         if(targetBounds.intersects(objectBounds)){
+            //alert("targetBounds:" + targetBounds);
             return current; //stop checking for other collisions
         }
     }
@@ -329,7 +333,7 @@ function revisePosition(target, cObject, nextX, nextY){ //alert("revisePosition(
     var cBottom = cBounds.y + cBounds.height;
     var cLeft = cBounds.x;
     var cRight = cBounds.x + cBounds.width;
-    
+    //alert("target x,y: " + target.x + "," + target.y);
     
     //determine positioning relationship between target and collided object
     //vertical
@@ -351,13 +355,11 @@ function revisePosition(target, cObject, nextX, nextY){ //alert("revisePosition(
     //There are eight possible relationships
     if(above && left){ //alert("above and left");
         pt.x = cLeft - target.width;
-        pt.y = nextY;
-        target.direction *= -0.25;   //bounce
+        pt.y = nextY
     }
-    else if(above && right){
+    else if(above && right){ //alert("above and right");
         pt.x = cRight;
         pt.y = nextY;
-        target.direction *= -0.25;   //bounce
     }
     else if(above){
         pt.x = nextX;
@@ -378,17 +380,23 @@ function revisePosition(target, cObject, nextX, nextY){ //alert("revisePosition(
         pt.x = nextX;
         pt.y = cBottom;
     }
-    else if(left){
+    else if(left){ //alert("left");
         pt.x = cLeft - target.width;
         pt.y = nextY;
         target.direction *= -0.25;
     }
-    else if(right){
+    else if(right){ //alert("right");
         pt.x = cRight;
         pt.y = nextY;
         target.direction *= -0.25;
     }
-    //alert(pt);
+    
+    //need to update the landed property of the original object, if using a clone
+    if(target.name === "clone" && target.landed){ //alert("target is clone");
+        var original = target.cloneOf;
+        original.landed = true;
+    }
+    
     return pt;      //return the x,y position that target should be moved to
 }
 
@@ -528,6 +536,8 @@ function renderPackage(){ //alert("renderPackage()");
 function checkChildren(){ //alert("checkChildren()");
     
     var shiftX, shiftY, nextX, nextY, current, cObject, globalPt;
+    
+    var currentClone = new createjs.Shape();
     var revisedPt = new createjs.Point(-100,-100);
     
     //for each object inside the container
@@ -561,6 +571,18 @@ function checkChildren(){ //alert("checkChildren()");
         globalPt = current.localToGlobal(nextX, nextY);
         nextX = globalPt.x;
         nextY = globalPt.y;
+        
+        
+        //create global replica of child for use in revise position
+        
+        globalPt = current.localToGlobal(current.x, current.y);
+        currentClone.x = globalPt.x;
+        currentClone.y = globalPt.y;
+        currentClone.width = current.width;
+        currentClone.height = current.height;
+        currentClone.cloneOf = current; //need this reference to update "landed"
+        currentClone.name = "clone";
+        
         /*
         if(current.name === "package"){
             alert("localToGlobal: " + globalPt + "\nglobalToLocal: " + current.globalToLocal(globalPt.x, globalPt.y));
@@ -576,7 +598,7 @@ function checkChildren(){ //alert("checkChildren()");
         else if( cObject !== "none"){               //hit a neutral
             
             //determine revised global position based on collision type
-            revisedPt = revisePosition(current, cObject, nextX, nextY);
+            revisedPt = revisePosition(currentClone, cObject, nextX, nextY);
             nextX = revisedPt.x;
             nextY = revisedPt.y;
             
@@ -614,7 +636,7 @@ function updateContainer(){ //alert("updateContainer()");
     }
     
     //vertical
-    if(!drone.up && !drone.landed){ //drone is falling
+    if(!drone.up){ //drone is falling
         
         nextY = dContainer.y + dContainer.speed;
     }
@@ -623,17 +645,15 @@ function updateContainer(){ //alert("updateContainer()");
         nextY = dContainer.y - dContainer.speed;
     }
     
-    
-    
     //check if a child collides with an object and container position must adjust
     revisedPt = checkChildren();
+    //alert(drone.landed);
     if(revisedPt.x !== -100 ){  //collision occurred
         nextX = revisedPt.x;
     }
     if(revisedPt.y !== -100 ){ //collision occurred
         nextY = revisedPt.y;
     }
-    
     
     dContainer.nextX = nextX;
     dContainer.nextY = nextY;
