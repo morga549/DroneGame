@@ -156,7 +156,7 @@ function buildContainer() { //alert("buildContainer()");
 
 function buildLine(){ //??temp function
     var l = new createjs.Graphics();
-    l.beginStroke("black").drawRect(0,0,281,139);
+    l.beginStroke("black").drawRect(0,0,260,167);
     line = new createjs.Shape(l);
 }
 
@@ -614,13 +614,13 @@ function checkChildren(){ //alert("checkChildren()");
             
             //determine revised global position based on collision type
             revisedPt = revisePosition(currentClone, cObject, nextX, nextY);
-            nextX = revisedPt.x;
-            nextY = revisedPt.y;
+            revisedPt.x -= shiftX;
+            revisedPt.y -= shiftY;
             
             //don't convert revised position back into local coordinate system
             //revisedPt = current.globalToLocal(nextX,nextY);
             //alert(revisedPt);
-            //alert(shiftX +"," + shiftY);
+            //alert(shiftX + "," + shiftY);
             return revisedPt; //return directly without shifting back
             //represents the next position the container should take
             //to remove collision of child
@@ -661,9 +661,10 @@ function updateContainer(){ //alert("updateContainer()");
     
     //check if a child collides with an object and container position must adjust
     revisedPt = checkChildren();
-    //alert(drone.landed);
+    
     if(revisedPt.x !== -100 ){  //collision occurred
         nextX = revisedPt.x;
+        //alert(revisedPt);
     }
     if(revisedPt.y !== -100 ){ //collision occurred
         nextY = revisedPt.y;
