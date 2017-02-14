@@ -156,7 +156,7 @@ function buildContainer() { //alert("buildContainer()");
 
 function buildLine(){ //??temp function
     var l = new createjs.Graphics();
-    l.beginStroke("black").drawRect(0,0,200,43);
+    l.beginStroke("black").drawRect(0,0,281,139);
     line = new createjs.Shape(l);
 }
 
@@ -192,7 +192,7 @@ function buildWalls(){ //alert("buildWalls()");
     //create shape object
     wall1 = new createjs.Shape(w);
     wall1.x = stage.canvas.width/2;
-    wall1.y = 50;
+    wall1.y = 180;
     wall1.width = 10;
     wall1.height = 250;
     wall1.name = "wall1";
@@ -322,7 +322,7 @@ function detectCollision(target, nextX, nextY){ //alert("detectCollision()");
 
 
 function revisePosition(target, cObject, nextX, nextY){ //alert("revisePosition()");
-    
+    var original;
     var pt = new createjs.Point(0,0); //used to store revised x,y position
     
     //flags indicate relationship between target and collided object
@@ -391,11 +391,13 @@ function revisePosition(target, cObject, nextX, nextY){ //alert("revisePosition(
         pt.y = nextY;
         target.direction *= -0.25;
     }
-    
+
     //need to update the landed property of the original object, if using a clone
     if(target.name === "clone" && target.landed){ //alert("target is clone");
-        var original = target.cloneOf;
+        original = target.cloneOf;
         original.landed = true;
+        original.container.landed = true;
+        //alert(original.name);
     }
     
     return pt;      //return the x,y position that target should be moved to
@@ -581,18 +583,7 @@ function checkChildren(){ //alert("checkChildren()");
         globalPt = current.localToGlobal(nextX, nextY);
         nextX = globalPt.x;
         nextY = globalPt.y;
-        
-        
-        //create global replica of child for use in revise position
-        globalPt = current.localToGlobal(current.x, current.y);
-        currentClone = new createjs.Shape();
-        currentClone.x = globalPt.x;
-        currentClone.y = globalPt.y;
-        currentClone.width = current.width;
-        currentClone.height = current.height;
-        currentClone.cloneOf = current; //need this reference to update "landed"
-        currentClone.name = "clone";
-        
+  
         /*
         if(current.name === "package"){
             alert("localToGlobal: " + globalPt + "\nglobalToLocal: " + current.globalToLocal(globalPt.x, globalPt.y));
@@ -605,10 +596,21 @@ function checkChildren(){ //alert("checkChildren()");
         if(cObject !== "none" && cObject.hazard){    //hit a hazard
             alert("hit hazard. must restart course.");
         }
-        else if( cObject !== "none" && current.name === "package"){
-            drop();
-        }
+        //else if( cObject !== "none" && package.dropped){
+        //    drop();
+        //}
         else if( cObject !== "none"){               //hit a neutral
+            
+            //create global replica of child for use in revise position
+            globalPt = current.localToGlobal(current.x, current.y);
+            currentClone = new createjs.Shape();
+            currentClone.x = globalPt.x - shiftX;
+            currentClone.y = globalPt.y - shiftY;
+            currentClone.width = current.width;
+            currentClone.height = current.height;
+            currentClone.cloneOf = current; //need this reference to update "landed"
+            currentClone.name = "clone";
+            
             
             //determine revised global position based on collision type
             revisedPt = revisePosition(currentClone, cObject, nextX, nextY);
