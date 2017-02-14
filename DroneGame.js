@@ -210,6 +210,7 @@ function buildWalls(){ //alert("buildWalls()");
 
 function runGame(e){ //alert("runGame()");
     if(!e.paused){
+        detectPackageLanding();
         
         //update package only if it is moving and not inside the container
         if(!package.carried && !package.landed){
@@ -425,6 +426,15 @@ function detectEdgeOfFrame(target, nextX, nextY){ //alert("detectEdgeOfFrame()")
     return pt;
 }
 
+function detectPackageLanding(){ //alert("detectPackageLanding");
+    var index = gameObjects.indexOf(package);
+    
+    if( index === -1 && package.landed && !package.carried){
+        gameObjects.push(package);
+        //alert("package landed");
+    }
+}
+
 
 
 
@@ -537,7 +547,7 @@ function checkChildren(){ //alert("checkChildren()");
     
     var shiftX, shiftY, nextX, nextY, current, cObject, globalPt;
     
-    var currentClone = new createjs.Shape();
+    var currentClone;
     var revisedPt = new createjs.Point(-100,-100);
     
     //for each object inside the container
@@ -574,8 +584,8 @@ function checkChildren(){ //alert("checkChildren()");
         
         
         //create global replica of child for use in revise position
-        
         globalPt = current.localToGlobal(current.x, current.y);
+        currentClone = new createjs.Shape();
         currentClone.x = globalPt.x;
         currentClone.y = globalPt.y;
         currentClone.width = current.width;
@@ -595,6 +605,9 @@ function checkChildren(){ //alert("checkChildren()");
         if(cObject !== "none" && cObject.hazard){    //hit a hazard
             alert("hit hazard. must restart course.");
         }
+        else if( cObject !== "none" && current.name === "package"){
+            drop();
+        }
         else if( cObject !== "none"){               //hit a neutral
             
             //determine revised global position based on collision type
@@ -611,7 +624,6 @@ function checkChildren(){ //alert("checkChildren()");
             //to remove collision of child
         }
     }
-    
     return revisedPt;
 }
 
