@@ -417,10 +417,14 @@ function detectEdgeOfFrame(target, nextX, nextY){ //alert("detectEdgeOfFrame()")
     }
     else if(nextX > stage.canvas.width - target.width){
         
-        pt.x = stage.canvas.width - package.width;
+        pt.x = stage.canvas.width - target.width;
         target.direction *= -0.25;     //bounce
     }
     //vertical
+    if(nextY < 0){
+        pt.y = 0;
+        target.direction *= -0.25;
+    }
     if(nextY > stage.canvas.height - target.height){
         pt.y = stage.canvas.height - target.height;
         target.landed = true;
@@ -454,6 +458,9 @@ function pickup(){ //alert("pickup()");
     
     //add Package to dContainer
     dContainer.addChild(package);   //adding to dContainer removes from Stage
+    
+    //update dContainer properties
+    dContainer.height += package.height;
     
     //update properties
     package.speed = dContainer.speed;
@@ -495,6 +502,9 @@ function drop(){ //alert("drop()");
     package.direction = dContainer.direction;
     package.carried = false;
     package.landed = false;
+    
+    //update dContainer properties
+    dContainer.height -= package.height;
 }
 
 
@@ -669,6 +679,21 @@ function updateContainer(){ //alert("updateContainer()");
     if(revisedPt.y !== -100 ){ //collision occurred
         nextY = revisedPt.y;
     }
+    
+    
+    
+    //perform edge of frame detection based on that next position
+    revisedPt = detectEdgeOfFrame(dContainer, nextX, nextY);
+    if(revisedPt.x !== -100){   //horizontal edge of frame occurred
+        
+        nextX = revisedPt.x;
+    }
+    if(revisedPt.y !== -100){   //vertical edge of frame occured
+        
+        nextY = revisedPt.y;
+    }
+    
+    
     
     dContainer.nextX = nextX;
     dContainer.nextY = nextY;
