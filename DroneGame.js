@@ -702,6 +702,10 @@ function updateContainer(){ //alert("updateContainer()");
 function renderContainer(){ //alert("renderContainer()");
     dContainer.x = dContainer.nextX;
     dContainer.y = dContainer.nextY;
+    
+    if(drone.up){
+        movePropellers();
+    }
 }
 
 // ---------------------- Animation ----------------------- //
