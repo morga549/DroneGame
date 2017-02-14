@@ -218,7 +218,7 @@ function runGame(e){ //alert("runGame()");
             renderPackage();
         }
         
-        if(!drone.landed){
+        if(!dContainer.landed){
             updateContainer();
             renderContainer();
         }
@@ -280,7 +280,7 @@ function removeKey(e){ //alert("removeKey()");
 function moveUp(e){ //alert("moveUp()");
     
     drone.up = true;
-    drone.landed = false;
+    drone.landed = dContainer.landed = false;
     
     if(package.carried) {
         package.landed = false;
@@ -428,7 +428,9 @@ function detectEdgeOfFrame(target, nextX, nextY){ //alert("detectEdgeOfFrame()")
     if(nextY > stage.canvas.height - target.height){
         pt.y = stage.canvas.height - target.height;
         target.landed = true;
+        //alert(target);
     }
+    
     return pt;
 }
 
