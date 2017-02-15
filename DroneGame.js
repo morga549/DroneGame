@@ -5,7 +5,7 @@ const SPACEBAR = 32;
 
 
 var queue, stage; //createjs objects
-var sky, dContainer, drone, parcel, wall1, wall2, line, pauseText;  //game objects
+var sky, dContainer, drone, parcel, wall1, wall2, line, pauseText, dropZone;  //game objects
 var gameObjects = [];   //contains all game objects not in dContainer
 
 var aKeyDown, dKeyDown, escKeyDown, spacebarDown = false;   //keyboard input flags
@@ -59,9 +59,10 @@ function buildGameObjects(){//alert("buildGameObjects()");
     buildPackage();
     buildLine();
     buildPauseMenu();
+    buildDropZone();
     
     //Add objects to Stage
-    stage.addChild(sky, dContainer, line, parcel, wall1, wall2, pauseText);
+    stage.addChild(sky, dContainer, line, parcel, wall1, wall2, pauseText, dropZone);
     
     //Add game objects to array
     gameObjects.push(parcel,wall2, wall1);
@@ -92,6 +93,16 @@ function buildBackground(){//alert("buildBackground());
     //create bitmap object
     sky = new createjs.Bitmap(image);
     sky.x = sky.y = 0;
+}
+
+function buildDropZone(){
+    var dz = new createjs.Graphics();
+    dz.beginStroke("#0204FA").beginFill("#2FC4FA").drawRect(0,0,50,50);
+
+    dropZone = new createjs.Shape(dz);
+    dropZone.x = dropZone.y = 500;
+    dropZone.alpha = 0.5;
+
 }
 
 function buildDrone() { //alert("buildDrone()");
