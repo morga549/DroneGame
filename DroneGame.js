@@ -21,7 +21,7 @@ var d_beginFillPropellerR; //right side of propeller
 
 //**bug 1.001: if drone flies up under parcel while hugging a wall, goes through parcel, then resets to 0,0 after it reaches the top of the parcel; happens because there are two collisions occurring at the same time, and it only responds to the first one. Not sure how to solve this. You could have it adjust position based on multiple collisions with objects. Maybe also after it passes top of wall, suddenly there is only a single object collided with the drone, and because the drone / container is in the middle of the object and the functions haven't been set up to deal with the situation, it somehow defaults the location, perhaps to -100, -100.
 
-
+// a comment
 
 // --------------------- startup functions ----------------------//
 
