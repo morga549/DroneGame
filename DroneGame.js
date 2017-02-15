@@ -3,12 +3,13 @@ const D_KEY = 68;
 const ESC_KEY = 27;
 const SPACEBAR = 32;
 
+
 var queue, stage; //createjs objects
-var sky, dContainer, drone, package, wall1, line;  //game objects
+var sky, dContainer, drone, package, wall1, line, pauseText;  //game objects
 var gameObjects = [];   //contains all game objects not in dContainer
 
 var aKeyDown, dKeyDown, escKeyDown, spacebarDown = false;   //keyboard input flags
-var gameOver = courseOver = false;
+var gameOver = courseOver = gamePaused = false;
 var droneHomeX, droneHomeY;   //starting position for dContainer/drone in course
 var packgeHomeX, packageHomeY;  //starting position for package in course
 
@@ -55,10 +56,12 @@ function buildGameObjects(){//alert("buildGameObjects()");
     buildContainer();
     buildWalls();
     buildPackage();
-    buildLine();            //??temp
+    buildLine();
+    buildPauseMenu();
+    //??temp
     
     //Add to Stage
-    stage.addChild(sky, dContainer, line, package, wall1);
+    stage.addChild(sky, dContainer, line, package, wall1, pauseText);
     
     //Add to array
     gameObjects.push(package,wall1);
@@ -133,6 +136,15 @@ function buildDrone() { //alert("buildDrone()");
     
     //set bounds
     drone.setBounds(drone.x,drone.y,drone.width,drone.height);
+}
+
+function buildPauseMenu() {
+    pauseText = new createjs.Text("Game Paused!\nEsc to un-pause.\nQ to quit.", "80px Arial", "#f0e906");
+    pauseText.x = stage.canvas.width/2;
+    pauseText.y = stage.canvas.height/3.5;
+    pauseText.textAlign = "center";
+    pauseText.shadow = new createjs.Shadow("#000000", 0, 0, 50);
+    pauseText.visible = !pauseText.visible;
 }
 
 function buildContainer() { //alert("buildContainer()");
@@ -230,7 +242,18 @@ function runGame(e){ //alert("runGame()");
 
 
 function pauseGame() { //alert("pauseGame()");
-    createjs.Ticker.paused = !createjs.Ticker.paused;
+
+    if(gamePaused) {
+        createjs.Ticker.paused = !createjs.Ticker.paused;
+        pauseText.visible = !pauseText.visible;
+        gamePaused = !gamePaused;
+
+    } else {
+        createjs.Ticker.paused = !createjs.Ticker.paused;
+        pauseText.visible = !pauseText.visible;
+        gamePaused = !gamePaused;
+    }
+    stage.update();
 }
 
 function detectKey(e){ //alert("detectKey()");
