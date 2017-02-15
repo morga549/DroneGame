@@ -7,6 +7,7 @@ const SPACEBAR = 32;
 var queue, stage; //createjs objects
 var sky, dContainer, drone, parcel, wall1, wall2, line, pauseText;  //game objects
 var gameObjects = [];   //contains all game objects not in dContainer
+var revisedArr = [];   //**bug fix contains potential revisions pts to travel to
 
 var aKeyDown, dKeyDown, escKeyDown, spacebarDown = false;   //keyboard input flags
 var gameOver = courseOver = false;
@@ -20,8 +21,11 @@ var d_beginFillPropellerR; //right side of propeller
 
 
 //**bug 1.001: if drone flies up under parcel while hugging a wall, goes through parcel, then resets to 0,0 after it reaches the top of the parcel; happens because there are two collisions occurring at the same time, and it only responds to the first one. Not sure how to solve this. You could have it adjust position based on multiple collisions with objects. Maybe also after it passes top of wall, suddenly there is only a single object collided with the drone, and because the drone / container is in the middle of the object and the functions haven't been set up to deal with the situation, it somehow defaults the location, perhaps to -100, -100.
+//**bug 1.001: SOLVED
 
-// a comment
+
+
+//**bug 2.001: if drone carries package and is sliding down a wall, only checking for drone collisions (because first), not checking for package as well, so can slip through platform. Will not occur if not colliding with another object at the same time as landing.
 
 // --------------------- startup functions ----------------------//
 
@@ -61,10 +65,10 @@ function buildGameObjects(){//alert("buildGameObjects()");
     buildPauseMenu();
     
     //Add objects to Stage
-    stage.addChild(sky, dContainer, line, parcel, wall1, wall2, pauseText);
+    stage.addChild(sky, dContainer, parcel, wall1, wall2, line, pauseText);
     
     //Add game objects to array
-    gameObjects.push(parcel,wall2, wall1);
+    gameObjects.push(parcel,wall1, wall2);
     
     stage.update();
 }
@@ -172,7 +176,7 @@ function buildContainer() { //alert("buildContainer()");
 
 function buildLine(){ //??temp function for diagnosis purposes, TO BE DELETED
     var l = new createjs.Graphics();
-    l.beginStroke("black").drawRect(0,0,191,180);
+    l.beginStroke("red").drawRect(0,0,310,261);
     line = new createjs.Shape(l);
 }
 
@@ -210,8 +214,7 @@ function buildWalls(){ //alert("buildWalls()");
     var w = new createjs.Graphics();
     w.beginFill("black").drawRect(0,0,10,250);
 
-    var w2 = new createjs.Graphics();
-    w2.beginFill("black").drawRect(0,0,100,10);
+    
     
     //create shape object
     wall1 = new createjs.Shape(w);
@@ -225,8 +228,12 @@ function buildWalls(){ //alert("buildWalls()");
     //set bounds
     wall1.setBounds(wall1.x, wall1.y, wall1.width, wall1.height);
 
+    //wall 2
+    var w2 = new createjs.Graphics();
+    w2.beginFill("red").drawRect(0,0,100,10);
+    
     wall2 = new createjs.Shape(w2);
-    wall2.x = wall1.x;
+    wall2.x = wall1.x+10;
     wall2.y = 250;
     wall2.width = 100;
     wall2.height = 10;
@@ -248,7 +255,7 @@ function runGame(e){ //alert("runGame()");
         
         //update parcel only if it is moving and not inside the container
         if(!parcel.carried && !parcel.landed){
-            updatePackage();
+            updateParcel();
             renderPackage();
             detectPackageLanding();
         }
@@ -349,7 +356,7 @@ function moveDown(e){ //alert("moveDown()");
 function detectCollision(target, nextX, nextY){ //alert("detectCollision()");
     
     var i,objectBounds, targetBounds;
-    //var collisionList = []; //**fix simultaneous collision bug
+    var collisionList = []; //**fix simultaneous collision bug
     
     //calculate next bounds of target
     targetBounds = target.getBounds();  //current bounds
@@ -365,16 +372,16 @@ function detectCollision(target, nextX, nextY){ //alert("detectCollision()");
         //determine whether object's Rectangle intersects target's Rectangle
         if(targetBounds.intersects(objectBounds)){  //collision occurred
 
-            //collisionList.push(current); //**fix simultaneous collision bug
-            return current; //stop checking for other collisions
+            collisionList.push(current); //**fix simultaneous collision bug
+            //return current; //stop checking for other collisions
         }
     }
-    //return collisionList; //**fix simultaneous collision bug
-    return "none";  //no collision detected
+    return collisionList; //**fix simultaneous collision bug
+    r//eturn "none";  //no collision detected
 }
 
 
-function revisePosition(target, cObject, nextX, nextY){ //alert("revisePosition()");
+function revisePosition(target, cObject, nextX, nextY, revisedArr){ //alert("revisePosition()");
 
     var pt = new createjs.Point(0,0); //used to store revised x,y position
     
@@ -452,6 +459,9 @@ function revisePosition(target, cObject, nextX, nextY){ //alert("revisePosition(
         drone.landed = true;    //if parcel was the collided object
     }
     
+    //determine the most restrictive point among multiple options from multiple collisions
+    pt = mostRestrictive(target, revisedArr, pt);
+    
     return pt;      //return the x,y position that target should be moved to
 }
 
@@ -499,8 +509,40 @@ function detectPackageLanding(){ //alert("detectPackageLanding");
 }
 
 
+function mostRestrictive(target, revisedArr, pt){//alert("mostRestrictive()");
+    //returns the more restrictive of two or more points, based on relationship to both objects you are colliding with
+    
+    //compare target against each point in revisedArr and against pt
+    //whichever is most restrictive is retained and returned
+    
+    var i, x1, x2, y1, y2;
+    var mostRestrictivePt = pt; //default
+    
+    for(i = 0; i < revisedArr.length; i++){
+        
+        //determine most restrictive x value
+        x1 = Math.abs(target.x - mostRestrictivePt.x);
+        x2 = Math.abs(target.x - revisedArr[i].x);
+        
+        if( x2 < x1){
+            mostRestrictivePt.x = revisedArr[i].x;
+            //alert(mostRestrictivePt.x);
+        }
 
-
+        
+        //determine most restrictive y value
+        y1 = Math.abs(target.y - mostRestrictivePt.y);
+        y2 = Math.abs(target.y - revisedArr[i].y)
+        
+        if( y2 < y1){
+            mostRestrictivePt.y = revisedArr[i].y;
+            //alert(mostRestrictivePt.y);
+        }
+        
+    }
+    
+    return mostRestrictivePt;
+}
 
 // --------------------------- Actions --------------------------------- //
 
@@ -586,7 +628,7 @@ function powerpackResponse(){alert("powerpackResponse()");
 // ---------------------- parcel update / rendering --------------------------//
 
 //used if parcel is moving on its own
-function updatePackage(){ //alert("updatePackage()");
+function updateParcel(){ //alert("updateParcel()");
     
     var cObject; //object parcel collided with
     var revisedPt; //x,y values needed to adjust after collision / edge of frame
@@ -597,14 +639,23 @@ function updatePackage(){ //alert("updatePackage()");
     
     //perform collision detection based on that next position
     cObject = detectCollision(parcel, nextX, nextY);
-    if(cObject !== "none") {  //hit something
+    if(cObject.length > 0){     //hit something
         
-        cObject.onCollision();
+        revisedArr = [];    //reset array with no elements
+        var k;
+        for(k = 0; k < cObject.length; k++){    //for each object collided with
+            
+            cObject[k].onCollision();
         
-        //determine revised global position based on collision type
-        revisedPt = revisePosition(parcel, cObject, nextX, nextY);
-        nextX = revisedPt.x;
-        nextY = revisedPt.y;
+            //determine revised global position based on collision type
+            revisedPt = revisePosition(parcel, cObject[k], nextX, nextY, revisedArr);
+            nextX = revisedPt.x;
+            nextY = revisedPt.y;
+            
+            revisedArr.push(revisedPt); //add to array
+            //alert(revisedArr);
+        }
+        
     }
     
     //perform edge of frame detection based on that next position
@@ -637,10 +688,10 @@ function renderPackage(){ //alert("renderPackage()");
 
 function checkChildren(){ //alert("checkChildren()");
     
-    var i;
+    var i, k;
     var shiftX, shiftY; //values represent whether child is shifted inside container
     var nextX, nextY; //next X and Y position of child
-    var cObject; //object child collided with
+    //var cObject; //object child collided with
     var globalPt; //represents child's x,y position relative to the stage
     
     //Point for revised position if collision or edge of screen detection occurs
@@ -681,30 +732,41 @@ function checkChildren(){ //alert("checkChildren()");
         nextY = globalPt.y;
 
         //perform collision detection using this global position
-        cObject = detectCollision(current, nextX, nextY);
+        var cObject = detectCollision(current, nextX, nextY);
         
-        if(cObject !== "none"){    //hit something
-            cObject.onCollision();
+        //if(cObject !== "none"){    //hit something **single version
+        if(cObject.length > 0){ //hit something
             
-            //create global replica of child for use in revisePosition()
-            //get the x,y position of child relative to stage, including shift
-            globalPt = current.localToGlobal(current.x - shiftX, current.y - shiftY);
-            var currentClone = new createjs.Shape();
+            revisedArr = [];  //reset with no elements
             
-            //copy properties of child
-            currentClone.x = globalPt.x;
-            currentClone.y = globalPt.y;
-            currentClone.width = current.width;
-            currentClone.height = current.height;
-            currentClone.cloneOf = current; //for updating "landed" property
-            currentClone.name = "clone";
-            
-            /*
-             a clone is created because the function revisePosition needs to consider where the object currently in relation to the object it is colliding with. We cannot use current because it represents the future position of the object, not its current position.
-             */
-            
-            //determine revised global position based on collision location
-            revisedPt = revisePosition(currentClone, cObject, nextX, nextY);
+            for(k = 0; k < cObject.length; k++){ //for each collided object
+                
+                cObject[k].onCollision();
+                
+                //create global replica of child for use in revisePosition()
+                //get the x,y position of child relative to stage, including shift
+                globalPt = current.localToGlobal(current.x - shiftX, current.y - shiftY);
+                var currentClone = new createjs.Shape();
+                
+                //copy properties of child
+                currentClone.x = globalPt.x;
+                currentClone.y = globalPt.y;
+                currentClone.width = current.width;
+                currentClone.height = current.height;
+                currentClone.cloneOf = current; //for updating "landed" property
+                currentClone.name = "clone";
+                
+                /*
+                 a clone is created because the function revisePosition needs to consider where the object currently in relation to the object it is colliding with. We cannot use current because it represents the future position of the object, not its current position.
+                 */
+                
+                //determine revised global position based on collision location
+                revisedPt = revisePosition(currentClone, cObject[k], nextX, nextY, revisedArr);
+                
+                //for comparing multiple conflicting choices
+                revisedArr.push(revisedPt);
+                //alert(revisedArr);
+            } //all collisions on this child have been assessed
             
             //by removing shift, this revised point now represents the x,y position
             //the container should take to resolve the collision of its child
@@ -749,13 +811,16 @@ function updateContainer(){ //alert("updateContainer()");
     
     //check if a child collides with an object and container position must adjust
     revisedPt = checkChildren();
+    
+    //if(flag){alert(revisedPt);}
     if(revisedPt.x !== -100 ){  //collision changed x value
         nextX = revisedPt.x;
-        //alert(revisedPt);
     }
     if(revisedPt.y !== -100 ){ //collision change y value
         nextY = revisedPt.y;
     }
+    
+    
     
     //perform edge of frame detection based on that next position
     revisedPt = detectEdgeOfFrame(dContainer, nextX, nextY);
