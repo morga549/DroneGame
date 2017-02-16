@@ -25,6 +25,22 @@
  onCollision is set to hazardResponse. If a Flock-Of-Birds is collided into by 
  a moving object, the hazardResponse() method will be called, which ends the course.
  
+ 
+ 
+ Code organized by:
+ - Overview
+ - Variables
+ - Startup Functions
+ - Game Objects
+ - game mechanics
+ - collision detection
+ - game actions
+ - movable object update / rendering
+ - animation
+ 
+ 
+ 
+ 
  */
 
 
@@ -156,15 +172,15 @@ function buildDropZone(wall){
 
     dropZone = new createjs.Shape(dz);
 
+    dropZone.regX = dropZone.x + 25;
+    dropZone.regY = dropZone.y + 50;
     dropZone.alpha = 0.3;
 
-    dropZone.x = wall.x + (wall.width / 2) - 25;
-    dropZone.y = wall.y - 51 ;
-    dropZone.name = "dropZone";
+    dropZone.x = wall.x + wall.width / 2;
+    dropZone.y = wall.y -2;
+
     dropZone.onCollision = dropZoneResponse;
     dropZone.setBounds(dropZone.x, dropZone.y, 50, 50);
-
-    //alert(dropZone.getBounds());
 
 }
 
@@ -322,24 +338,19 @@ function buildWalls(){ //alert("buildWalls()");
 //============================================================================//
 
 function runGame(e){ //alert("runGame()");
+    var i;
+    
     if(!e.paused){
         
-        //update parcel only if it is moving and not inside the container
-        if(!parcel.carried && !parcel.landed){
-            //updateParcel();
-           // renderPackage();
+        for(i = 0; i < movingArr.length; i++){
             
-            updatePosition(parcel);
-            renderPosition(parcel);
-           detectLanding(parcel);
+            if(!movingArr[i].landed) {
+                updatePosition(movingArr[i]);
+                renderPosition(movingArr[i]);
+            }
         }
         
-        if(!dContainer.landed){
-            //updateContainer();
-           // renderContainer();
-            updatePosition(dContainer);
-            renderPosition(dContainer);
-        }
+         detectLanding(parcel);
 
         debugText.text = "Dropzone intersects dContainer?: " + dropZone.getBounds().intersects(dContainer.getBounds());
         stage.update();
@@ -670,7 +681,7 @@ function powerpackResponse(){alert("powerpackResponse()");
     
 }
 
-function dropZoneResponse() {
+function dropZoneResponse() { //alert("dropZoneResponse()");
     if(parcel.carried && dContainer.landed) {
         alert("You Win!");
     }
