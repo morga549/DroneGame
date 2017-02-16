@@ -355,7 +355,11 @@ function runGame(e){ //alert("runGame()");
          detectLanding(parcel);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         debugText.text = "Dropzone intersects dContainer?: " + dropZone.getBounds().intersects(dContainer.getBounds()) + "\t Carried: " + parcel.carried + "\t Landed: " + dContainer.landed;
+=======
+        debugText.text = "dContainer landed? " + dContainer.landed;
+>>>>>>> master
 =======
         debugText.text = "dContainer landed? " + dContainer.landed;
 >>>>>>> master
@@ -689,8 +693,12 @@ function powerpackResponse(){alert("powerpackResponse()");
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 function dropZoneResponse() { //alert("dropZoneResponse()");
     alert("carried: " + parcel.carried + "," + "landed: " + dContainer.landed)
+=======
+function dropZoneResponse() {// alert("dropZoneResponse()");
+>>>>>>> master
 =======
 function dropZoneResponse() {// alert("dropZoneResponse()");
 >>>>>>> master
