@@ -39,7 +39,7 @@
  - animation
  
  
- 
+ **Bug 3.01 If land on surface while carrying package, then let go of package, then grab again, sometimes the package sinks below the surface, and when you grab it again, it defaults to -100,-100.
  
  */
 
@@ -428,7 +428,7 @@ function detectKey(e){ //alert("detectKey()");
                 checkPickup(parcel);
             }
             else if (parcel.carried){
-                drop();
+                drop(parcel);
             }
             break;
     }
@@ -712,36 +712,37 @@ function pickup(target){ //alert("pickup()");
 }
 
 
-function drop(){ //alert("drop()");
+function drop(target){ //alert("drop()");
     
     //parcel x,y is relative to dContainer and must be readjusted to stage
-    var shiftX = (dContainer.width - parcel.width) /2;
+    var shiftX = (dContainer.width - target.width) /2;
     var shiftY = drone.height;
-    var globalPt = parcel.localToGlobal(parcel.x-shiftX, parcel.y-shiftY);
-    //alert(globalPt);
-    //move to correct position inside stage
-    parcel.x = parcel.nextX = globalPt.x;
-    parcel.y = parcel.nextY = globalPt.y-3;
-    
-    //adjusts bounds to match position relative to stage
-    parcel.setBounds(parcel.x, parcel.y, parcel.width, parcel.height);
-    
-    //add Package to stage
-    stage.addChild(parcel);    //adding to stage removes from dContainer
-    
-    //add Package to movingArr
-    movingArr.push(parcel);
-    //gameObjectsArr.push(parcel);
+    var globalPt = target.localToGlobal(target.x-shiftX, target.y-shiftY);
     
     //update properties
-    parcel.direction = dContainer.direction;
-    parcel.speed = dContainer.speed + 2;
-    parcel.carried = false;
-    parcel.landed = false;
+    target.direction = dContainer.direction;
+    target.speed = dContainer.speed + 2;
+    target.carried = false;
+    target.landed = false;
+    
+    //move to correct position inside stage
+    target.x = target.nextX = globalPt.x;
+    target.y = target.nextY = globalPt.y-target.speed;
+    
+    //adjusts bounds to match position relative to stage
+    target.setBounds(target.x, target.y, target.width, target.height);
+    
+    //add Package to stage
+    stage.addChild(target);    //adding to stage removes from dContainer
+    
+    //add Package to movingArr
+    movingArr.push(target);
+    //gameObjectsArr.push(parcel);
+    
     
     //update dContainer properties
-    dContainer.height -= parcel.height; //no longer carrying the parcel
-    dContainer.getBounds().height -= parcel.height; //update height bounds as well
+    dContainer.height -= target.height; //no longer carrying the parcel
+    dContainer.getBounds().height -= target.height; //update height bounds as well
 }
 
 function neutralResponse(){ //alert("neutralResponse()");
