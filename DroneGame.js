@@ -179,6 +179,7 @@ function buildDropZone(wall){
     dropZone.name = "dropZone";
     dropZone.onCollision = dropZoneResponse;
     dropZone.setBounds(dropZone.x, dropZone.y, 50, 50);
+    dropZone.name = "dropZone";
 
 }
 
@@ -353,7 +354,8 @@ function runGame(e){ //alert("runGame()");
         //}
          detectLanding(parcel);
 
-        debugText.text = "dContainer landed? " + dContainer.landed;
+        debugText.text = "Dropzone intersects dContainer?: " + dropZone.getBounds().intersects(dContainer.getBounds()) + "\t Carried: " + parcel.carried + "\t Landed: " + dContainer.landed;
+
         stage.update();
     }
 }
@@ -626,6 +628,7 @@ function pickup(){ //alert("pickup()");
     
     //update Package properties
     parcel.carried = true;
+    //alert("carried");
     
     //determine correct position inside container
     adjustedX = (dContainer.width - parcel.width) /2;
@@ -682,7 +685,9 @@ function powerpackResponse(){alert("powerpackResponse()");
     
 }
 
-function dropZoneResponse() {// alert("dropZoneResponse()");
+function dropZoneResponse() { //alert("dropZoneResponse()");
+    alert("carried: " + parcel.carried + "," + "landed: " + dContainer.landed)
+
     if(parcel.carried && dContainer.landed) {
         alert("You Win!");
     }
@@ -835,7 +840,7 @@ function updatePosition(target){
             
             //perform position revision
             if(collisionArr.length > 0){ //hit something
-            
+                //alert(collisionArr);
                 //create a copy of child to compare original position w/ objects
                 var childClone = getChildClone(child);
 
@@ -922,12 +927,14 @@ function detectLanding(target){ //alert("detectLanding()");
     
     //if parcel is not in game array and parcel landed
     //and parcel is not inside the container, add to game objects array again
-    if( index === -1 && target.landed && !target.carried){
+    if( index === -1 && !target.carried && target.landed){
         gameObjectsArr.push(target);
         
         //remove parcel from movingArr as well
         index = movingArr.indexOf(target);
         movingArr.splice(index,1);
+        
+        //alert("detect parcel landing on its own");
     }
 }
 
