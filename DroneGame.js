@@ -124,7 +124,7 @@ function buildGameObjects(){//alert("buildgameObjectsArr()");
     buildDropZone(wall2);
 
     // adding a Text display object to display properties during game
-    debugText = new createjs.Text("Parcel carried: " + parcel.carried + "Parcel landed: " + parcel.landed, "15px Arial", "#f00911");
+    debugText = new createjs.Text("", "15px Arial", "#f00911");
     debugText.x =10;
     debugText.y = stage.canvas.height - 20;
     
@@ -172,13 +172,11 @@ function buildDropZone(wall){
 
     dropZone = new createjs.Shape(dz);
 
-    dropZone.regX = dropZone.x + 25;
-    dropZone.regY = dropZone.y + 50;
     dropZone.alpha = 0.3;
 
-    dropZone.x = wall.x + wall.width / 2;
-    dropZone.y = wall.y -2;
-
+    dropZone.x = wall.x + (wall.width / 2) - 25;
+    dropZone.y = wall.y - 51 ;
+    dropZone.name = "dropZone";
     dropZone.onCollision = dropZoneResponse;
     dropZone.setBounds(dropZone.x, dropZone.y, 50, 50);
 
@@ -352,7 +350,7 @@ function runGame(e){ //alert("runGame()");
         
          detectLanding(parcel);
 
-        debugText.text = "Dropzone intersects dContainer?: " + dropZone.getBounds().intersects(dContainer.getBounds());
+        debugText.text = "dContainer landed? " + dContainer.landed;
         stage.update();
     }
 }
@@ -681,7 +679,7 @@ function powerpackResponse(){alert("powerpackResponse()");
     
 }
 
-function dropZoneResponse() { //alert("dropZoneResponse()");
+function dropZoneResponse() {// alert("dropZoneResponse()");
     if(parcel.carried && dContainer.landed) {
         alert("You Win!");
     }
@@ -783,18 +781,21 @@ function performPositionRevision(target, collisionArr, nextX, nextY){
     
     //consider each object that collided with the target
     for( i = 0; i < collisionArr.length; i++){
-        
+
+
         collisionArr[i].onCollision(); //what other object does in collision
-        
-        //determine revised global position based on collision situation
-        pt = revisePosition(target, collisionArr[i], nextX, nextY, possiblePts);
-        nextX = pt.x;
-        nextY = pt.y;
-        
-        //add to array to compare against results from other collided objects
-        possiblePts.push(pt);
+
+        if(collisionArr[i].name != "dropZone") {
+            //determine revised global position based on collision situation
+            pt = revisePosition(target, collisionArr[i], nextX, nextY, possiblePts);
+            nextX = pt.x;
+            nextY = pt.y;
+
+            //add to array to compare against results from other collided objects
+            possiblePts.push(pt);
+        }
     } //end for loop
-    
+
     return new createjs.Point(nextX, nextY);
 }
 
