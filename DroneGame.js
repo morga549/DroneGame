@@ -61,7 +61,8 @@ var debugText;
 var queue, stage;
 
 //game objects
-var sky, dContainer, drone, parcel, wall1, wall2, line, pauseText, dropZone;
+var sky, dContainer, drone, parcel, wall1, wall2, line, pauseText, dropZone, ocean;
+var waveInterval; //reference to window interval for wave animation
 
 //starting positions
 var droneHomeX, droneHomeY;   //dContainer/drone
@@ -80,8 +81,6 @@ var aKeyDown = dKeyDown = escKeyDown = spacebarDown = false; //keyboard input fl
 var gameOver = courseOver = false;
 
 
-
-//**bug 2.001: if drone carries package and is sliding down a wall, only checking for drone collisions (because first), not checking for package as well, so can slip through platform. Will not occur if not colliding with another object at the same time as landing.
 
 //============================================================================//
 //                                startup functions                           //
@@ -122,17 +121,18 @@ function buildGameObjects(){//alert("buildgameObjectsArr()");
     buildLine();
     buildPauseMenu();
     buildDropZone(wall2);
+    buildOcean(10,10,15,0,20);
 
     // adding a Text display object to display properties during game
-    debugText = new createjs.Text("", "15px Arial", "#f00911");
+    debugText = new createjs.Text("", "15px Arial", "black");
     debugText.x =10;
-    debugText.y = stage.canvas.height - 20;
+    debugText.y = 10;
     
     //Add all objects to Stage except drone (drone was added to dContainer)
-    stage.addChild(sky, dContainer, parcel, wall1, wall2, line, pauseText, dropZone, debugText);
+    stage.addChild(sky, dContainer, parcel, wall1, wall2, line, ocean, pauseText, dropZone, debugText);
 
     //Add game objects to array
-    gameObjectsArr.push(wall1, wall2, dropZone);
+    gameObjectsArr.push(wall1, wall2, dropZone,ocean);
   
     //add objects to moving array
     movingArr.push(dContainer, parcel);
@@ -150,6 +150,9 @@ function startGame(){ //alert("startGame()");
     window.onkeyup = removeKey;
     window.onmousedown = moveUp;
     window.onmouseup = moveDown;
+    
+    //animation
+    waveInterval = window.setInterval(moveWaves, 1000);
 }
 
 
@@ -329,7 +332,39 @@ function buildWalls(){ //alert("buildWalls()");
 }
 
 
+function buildOcean(n, h, depth, a, b){
 
+    var i;
+    var w = (stage.canvas.width / n);   //width of a wave
+    var bezierCommands = [];
+    
+    //create Shape
+    ocean = new createjs.Shape();
+    
+    //properties
+    ocean.x = 0;
+    ocean.y = stage.canvas.height - (h + depth);
+    ocean.graphics.beginFill("lightskyblue");
+    g_beginFill = ocean.graphics.command;
+    ocean.graphics.drawRect(0,h,stage.canvas.width, 15);
+    ocean.graphics.beginStroke("blue").beginFill("lightskyblue");
+    ocean.onCollision = hazardResponse;
+    
+    ocean.setBounds(ocean.x, ocean.y+(h/2), stage.canvas.width, (h + depth));
+    
+    
+    for(i = 0; i < n; i++){
+        
+        ocean.graphics.moveTo(ocean.x+w*i,h);
+        ocean.graphics.bezierCurveTo((w/2 + w*i),a,(w/2 + w*i),b,(w + w*i),h);
+        bezierCommands.push(ocean.graphics.command);    //add each curve to array
+        
+    }
+    ocean.curves = bezierCommands;  //store in ocean object
+    //ocean.graphics.endFill();
+    //ocean.graphics.beginStroke("red");
+    //ocean.graphics.drawRect(ocean.x, 0 +(h/2), stage.canvas.width, (h + depth));
+}
 
 
 //============================================================================//
@@ -342,6 +377,8 @@ function runGame(e){ //alert("runGame()");
     if(!e.paused){
         
         detectLanding(parcel);
+        //createjs.Tween.get(ocean).wait(1000).call(moveWaves).loop = true;
+        
         
         for(i = 0; i < movingArr.length; i++){
             
@@ -363,6 +400,12 @@ function pauseGame(e) { //alert("pauseGame()");
     createjs.Ticker.paused = !createjs.Ticker.paused;
     pauseText.visible = !pauseText.visible;
     stage.update();
+    
+    if(createjs.Ticker.paused){
+        window.clearInterval(waveInterval); //remove interval from window
+    } else{
+        waveInterval = window.setInterval(moveWaves, 1000); //add interval to window
+    }
 }
 
 function detectKey(e){ //alert("detectKey()");
@@ -1007,6 +1050,25 @@ function movePropellers(){ //alert("movePropellers()");
         d_beginFillPropellerR.style = "lightgrey";
         d_beginFillPropellerL.style = "grey";
     }
+}
+
+
+//ocean animation
+function moveWaves(e){
+
+    var i, cp1y, cp2y, temp;
+    var waveArr = ocean.curves;
+
+        for(i = 0; i < waveArr.length; i++){
+            
+            cp1y = waveArr[i].cp1y;
+            cp2y = waveArr[i].cp2y;
+            //alert(cp1y +"," + cp2y);
+            //switch the cp1y and cp2y values for each Graphics.BezierCurveTo object
+            temp = cp1y;
+            waveArr[i].cp1y = cp2y;
+            waveArr[i].cp2y = temp;
+        }
 }
 
 
