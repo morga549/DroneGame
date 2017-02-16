@@ -155,7 +155,6 @@ function buildDropZone(wall){
     dz.beginStroke("#0204FA").beginFill("#2FC4FA").drawRect(0,0,50,50);
 
     dropZone = new createjs.Shape(dz);
-    dropZone.setBounds(dropZone.x, dropZone.y, 50, 50);
 
     dropZone.regX = dropZone.x + 25;
     dropZone.regY = dropZone.y + 50;
@@ -165,6 +164,8 @@ function buildDropZone(wall){
     dropZone.y = wall.y -2;
 
     dropZone.onCollision = dropZoneResponse;
+    dropZone.setBounds(dropZone.x, dropZone.y, 50, 50);
+    //alert(dropZone.getBounds());
 
 }
 
