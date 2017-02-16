@@ -46,7 +46,7 @@ function init() { //alert("init()");
     
     stage = new createjs.Stage("canvas");
     
-    buildgameObjectsArr();
+    buildGameObjects();
     startGame();
     //**temp
     //updatePosition(drone);
@@ -54,7 +54,7 @@ function init() { //alert("init()");
 }
 
 
-function buildgameObjectsArr(){//alert("buildgameObjectsArr()");
+function buildGameObjects(){//alert("buildgameObjectsArr()");
 
     //locate the drone and parcel at the start of the course
     droneHomeX = 75;
@@ -73,35 +73,18 @@ function buildgameObjectsArr(){//alert("buildgameObjectsArr()");
     buildDropZone(wall2);
 
     // adding a Text display object to display properties during game
-
-
     debugText = new createjs.Text("Parcel carried: " + parcel.carried + "Parcel landed: " + parcel.landed, "15px Arial", "#f00911");
     debugText.x =10;
     debugText.y = stage.canvas.height - 20;
     
     //Add objects to Stage
-<<<<<<< Updated upstream
     stage.addChild(sky, dContainer, parcel, wall1, wall2, line, pauseText, dropZone, debugText);
-=======
-<<<<<<< HEAD
-    stage.addChild(sky, dContainer, parcel, wall1, wall2, line, pauseText, dropZone);
->>>>>>> Stashed changes
 
     //Add game objects to array
-    gameObjects.push(parcel,wall1, wall2, dropZone);
+    gameObjectsArr.push(parcel,wall1, wall2, dropZone);
   
     //add objects to moving array
     movingArr.push(dContainer);
-<<<<<<< Updated upstream
-
-=======
-=======
-  stage.addChild(sky, dContainer, parcel, wall1, wall2, line, pauseText, dropZone, debugText);
-
-    //Add game objects to array
-    gameObjects.push(parcel,wall1, wall2, dropZone);
->>>>>>> master
->>>>>>> Stashed changes
     
     stage.update();
 }
