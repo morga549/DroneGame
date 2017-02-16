@@ -39,7 +39,7 @@
  - animation
  
  
- **Bug 3.01 If land on surface while carrying package, then let go of package, then grab again, sometimes the package sinks below the surface, and when you grab it again, it defaults to -100,-100.
+ **Bug 3.01 If land on surface while carrying package, then let go of package, then grab again, sometimes the package sinks below the surface, and when you grab it again, it got the values -30,-33. Has something to with the shiftX, shiftY in Step 2 B of the updatePosition() method. For now, I mitigated it by only choosing to update to point values that are greater than or equal to zero.
  
  */
 
@@ -727,7 +727,7 @@ function drop(target){ //alert("drop()");
     
     //move to correct position inside stage
     target.x = target.nextX = globalPt.x;
-    target.y = target.nextY = globalPt.y-target.speed;
+    target.y = target.nextY = globalPt.y;//-target.speed;
     
     //adjusts bounds to match position relative to stage
     target.setBounds(target.x, target.y, target.width, target.height);
@@ -736,9 +736,13 @@ function drop(target){ //alert("drop()");
     stage.addChild(target);    //adding to stage removes from dContainer
     
     //add Package to movingArr
-    movingArr.push(target);
-    //gameObjectsArr.push(parcel);
+    //alert("drop" + parcel.landed);
     
+    if(!dContainer.landed){ //mid-air drop
+        movingArr.push(target);
+    } else {
+        gameObjectsArr.push(parcel);
+    }
     
     //update dContainer properties
     dContainer.height -= target.height; //no longer carrying the parcel
@@ -934,10 +938,11 @@ function updatePosition(target){
   
                              
         //Step 2 B - after processing children check if nextX, nextY needs changing
-        if(pt.x !== -100) { //collision changed x value
+        if(pt.x >= 0) { //collision changed x value
             nextX = pt.x;
+            //alert(pt); //**for some reason, got -30,-33 here
         }
-        if(pt.y !== -100){ //collision changed y value
+        if(pt.y >= 0){ //collision changed y value
             nextY = pt.y;
         }
         
@@ -1002,6 +1007,7 @@ function detectLanding(target){ //alert("detectLanding()");
     //and parcel is not inside the container, add to game objects array
     if( index === -1 && !target.carried && target.landed){
         gameObjectsArr.push(target);
+        //alert("landed");
     }
     
     //if parcel is in the movingArray, remove it
