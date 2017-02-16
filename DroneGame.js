@@ -3,6 +3,7 @@ const D_KEY = 68;
 const ESC_KEY = 27;
 const SPACEBAR = 32;
 
+
 var debugText;
 
 //createjs objects
@@ -11,28 +12,21 @@ var queue, stage;
 //game objects
 var sky, dContainer, drone, parcel, wall1, wall2, line, pauseText, dropZone;
 
-var gameObjectsArr = [];   //contains all game objects not in dContainer;
-var movingArr = [];    //contains all moving objects;
-var globalPoint;    //**new version
-
-var aKeyDown = dKeyDown = escKeyDown = spacebarDown = false;   //keyboard input flags
+var gameObjectsArr = [];   //contains all game objects not in dContainer
+var movingArr = [];    //contains all moving objects
+var aKeyDown = dKeyDown = escKeyDown = spacebarDown = false; //keyboard input flags
 var gameOver = courseOver = false;
 
 //starting positions
 var droneHomeX, droneHomeY;   //dContainer/drone
 var parcelHomeX, parcelHomeY;  //parcel
 
+
 //drone customization
 var d_beginFillBody;
 var d_beginFillPropellerL; //left side of propeller
 var d_beginFillPropellerR; //right side of propeller
 
-
-
-
-
-//**unnecessary
-var revisedArr = [];   //**bug fix contains potential revisions pts to travel to
 
 
 //**bug 2.001: if drone carries package and is sliding down a wall, only checking for drone collisions (because first), not checking for package as well, so can slip through platform. Will not occur if not colliding with another object at the same time as landing.
@@ -86,14 +80,28 @@ function buildgameObjectsArr(){//alert("buildgameObjectsArr()");
     debugText.y = stage.canvas.height - 20;
     
     //Add objects to Stage
+<<<<<<< Updated upstream
     stage.addChild(sky, dContainer, parcel, wall1, wall2, line, pauseText, dropZone, debugText);
+=======
+<<<<<<< HEAD
+    stage.addChild(sky, dContainer, parcel, wall1, wall2, line, pauseText, dropZone);
+>>>>>>> Stashed changes
 
     //Add game objects to array
     gameObjects.push(parcel,wall1, wall2, dropZone);
   
     //add objects to moving array
     movingArr.push(dContainer);
+<<<<<<< Updated upstream
 
+=======
+=======
+  stage.addChild(sky, dContainer, parcel, wall1, wall2, line, pauseText, dropZone, debugText);
+
+    //Add game objects to array
+    gameObjects.push(parcel,wall1, wall2, dropZone);
+>>>>>>> master
+>>>>>>> Stashed changes
     
     stage.update();
 }
