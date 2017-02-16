@@ -156,15 +156,14 @@ function buildDropZone(wall){
 
     dropZone = new createjs.Shape(dz);
 
-    dropZone.regX = dropZone.x + 25;
-    dropZone.regY = dropZone.y + 50;
     dropZone.alpha = 0.3;
 
-    dropZone.x = wall.x + wall.width / 2;
-    dropZone.y = wall.y -2;
-
+    dropZone.x = wall.x + (wall.width / 2) - 25;
+    dropZone.y = wall.y - 51 ;
+    dropZone.name = "dropZone";
     dropZone.onCollision = dropZoneResponse;
     dropZone.setBounds(dropZone.x, dropZone.y, 50, 50);
+
     //alert(dropZone.getBounds());
 
 }
@@ -672,7 +671,6 @@ function powerpackResponse(){alert("powerpackResponse()");
 }
 
 function dropZoneResponse() {
-    alert("drop zone response")
     if(parcel.carried && dContainer.landed) {
         alert("You Win!");
     }
