@@ -3,52 +3,30 @@ const D_KEY = 68;
 const ESC_KEY = 27;
 const SPACEBAR = 32;
 
-<<<<<<< Updated upstream
+
 var debugText;
 
-=======
-<<<<<<< HEAD
->>>>>>> Stashed changes
 //createjs objects
 var queue, stage;
 
 //game objects
 var sky, dContainer, drone, parcel, wall1, wall2, line, pauseText, dropZone;
 
-var gameObjectsArr = [];   //contains all game objects not in dContainer;
-var movingArr = [];    //contains all moving objects;
-var globalPoint;    //**new version
-
-<<<<<<< Updated upstream
-var aKeyDown = dKeyDown = escKeyDown = spacebarDown = false;   //keyboard input flags
-=======
-=======
-var debugText;
-var queue, stage; //createjs objects
-var sky, dContainer, drone, parcel, wall1, wall2, line, pauseText, dropZone;  //game objects
-var gameObjects = [];   //contains all game objects not in dContainer
-var revisedArr = [];   //**bug fix contains potential revisions pts to travel to
->>>>>>> master
-
-var aKeyDown, dKeyDown, escKeyDown, spacebarDown = false;   //keyboard input flags
->>>>>>> Stashed changes
+var gameObjectsArr = [];   //contains all game objects not in dContainer
+var movingArr = [];    //contains all moving objects
+var aKeyDown = dKeyDown = escKeyDown = spacebarDown = false; //keyboard input flags
 var gameOver = courseOver = false;
 
 //starting positions
 var droneHomeX, droneHomeY;   //dContainer/drone
 var parcelHomeX, parcelHomeY;  //parcel
 
+
 //drone customization
 var d_beginFillBody;
 var d_beginFillPropellerL; //left side of propeller
 var d_beginFillPropellerR; //right side of propeller
 
-
-
-
-
-//**unnecessary
-var revisedArr = [];   //**bug fix contains potential revisions pts to travel to
 
 
 //**bug 2.001: if drone carries package and is sliding down a wall, only checking for drone collisions (because first), not checking for package as well, so can slip through platform. Will not occur if not colliding with another object at the same time as landing.
