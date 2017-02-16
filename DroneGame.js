@@ -1,3 +1,38 @@
+//============================================================================//
+//                                 Overview                                   //
+//============================================================================//
+/*
+ Dynamically injected properties include:
+ 
+ - carried
+ - direction
+ - height
+ - isContainer
+ - landed
+ - nextX
+ - nextY
+ - onCollision
+ - speed
+ - width
+ - up
+ 
+ It is possible to set a function as a property of an object. Certain objects have
+ the property "onCollision". The idea is that if an object is collided into, we call 
+ 
+    <that object>.onCollision(); 
+ 
+ and the function referenced there is called. For the case of a Flock-Of-Birds, 
+ onCollision is set to hazardResponse. If a Flock-Of-Birds is collided into by 
+ a moving object, the hazardResponse() method will be called, which ends the course.
+ 
+ */
+
+
+//============================================================================//
+//                                variables                                   //
+//============================================================================//
+
+//keycodes represent certain keys on the keyboard
 const A_KEY = 65;
 const D_KEY = 68;
 const ESC_KEY = 27;
@@ -12,15 +47,9 @@ var queue, stage;
 //game objects
 var sky, dContainer, drone, parcel, wall1, wall2, line, pauseText, dropZone;
 
-var gameObjectsArr = [];   //contains all game objects not in dContainer
-var movingArr = [];    //contains all moving objects
-var aKeyDown = dKeyDown = escKeyDown = spacebarDown = false; //keyboard input flags
-var gameOver = courseOver = false;
-
 //starting positions
 var droneHomeX, droneHomeY;   //dContainer/drone
 var parcelHomeX, parcelHomeY;  //parcel
-
 
 //drone customization
 var d_beginFillBody;
@@ -28,10 +57,19 @@ var d_beginFillPropellerL; //left side of propeller
 var d_beginFillPropellerR; //right side of propeller
 
 
+//variables with values
+var gameObjectsArr = [];   //contains all game objects not in dContainer
+var movingArr = [];        //contains all moving objects not in a container
+var aKeyDown = dKeyDown = escKeyDown = spacebarDown = false; //keyboard input flags
+var gameOver = courseOver = false;
+
+
 
 //**bug 2.001: if drone carries package and is sliding down a wall, only checking for drone collisions (because first), not checking for package as well, so can slip through platform. Will not occur if not colliding with another object at the same time as landing.
 
-// --------------------- startup functions ----------------------//
+//============================================================================//
+//                                startup functions                           //
+//============================================================================//
 
 function load() { //alert("load()");
 
@@ -48,9 +86,6 @@ function init() { //alert("init()");
     
     buildGameObjects();
     startGame();
-    //**temp
-    //updatePosition(drone);
-    //alert(parcel.x + "," + parcel.y + "," + parcel.localToGlobal(parcel.x, parcel.y));
 }
 
 
@@ -77,7 +112,7 @@ function buildGameObjects(){//alert("buildgameObjectsArr()");
     debugText.x =10;
     debugText.y = stage.canvas.height - 20;
     
-    //Add objects to Stage
+    //Add all objects to Stage except drone (drone was added to dContainer)
     stage.addChild(sky, dContainer, parcel, wall1, wall2, line, pauseText, dropZone, debugText);
 
     //Add game objects to array
@@ -102,8 +137,9 @@ function startGame(){ //alert("startGame()");
 }
 
 
-
-// --------------------- game objects ----------------------//
+//============================================================================//
+//                               game objects                                 //
+//============================================================================//
 
 function buildBackground(){//alert("buildBackground());
     
@@ -229,11 +265,7 @@ function buildPackage(){ //alert("buildPackage());
     parcel.speed = 0;
     parcel.onCollision = neutralResponse; //method to call in case of collision
     parcel.isContainer = false;
-    
-    /*
-     It is possible to set a function as a property of an object. In this case, if the object has a collision, we call parcel.onCollision(); and the function neutralResponse() is then called.
-     */
-
+    parcel.carried = false;
     
     //graphics
     parcel.graphics.beginFill("#aa8e67").drawRect(0,0,parcel.width,parcel.height);
@@ -285,7 +317,9 @@ function buildWalls(){ //alert("buildWalls()");
 
 
 
-// ------------------Game Mechanics --------------------//
+//============================================================================//
+//                              game mechanics                                //
+//============================================================================//
 
 function runGame(e){ //alert("runGame()");
     if(!e.paused){
@@ -354,12 +388,6 @@ function removeKey(e){ //alert("removeKey()");
         case D_KEY:
             dKeyDown = false;
             break;
-        case ESC_KEY:
-            escKeyDown = false;
-            break;
-        case SPACEBAR:
-            spacebarDown = false;
-            break;
     }
 }
 
@@ -388,7 +416,7 @@ function moveDown(e){ //alert("moveDown()");
 function detectCollision(target, nextX, nextY){ //alert("detectCollision()");
     
     var i,objectBounds, targetBounds;
-    var collisionList = []; //**fix simultaneous collision bug
+    var collisionList = [];
     
     //calculate next bounds of target
     targetBounds = target.getBounds();  //current bounds
@@ -404,12 +432,10 @@ function detectCollision(target, nextX, nextY){ //alert("detectCollision()");
         //determine whether object's Rectangle intersects target's Rectangle
         if(targetBounds.intersects(objectBounds)){  //collision occurred
 
-            collisionList.push(current); //**fix simultaneous collision bug
-            //return current; //stop checking for other collisions
+            collisionList.push(current);
         }
     }
-    return collisionList; //**fix simultaneous collision bug
-    //return "none";  //no collision detected
+    return collisionList;
 }
 
 
@@ -491,7 +517,7 @@ function revisePosition(target, cObject, nextX, nextY, revisedArr){ //alert("rev
         dContainer.landed = true;    //if parcel was the collided object
     }
     
-    //determine the most restrictive point among multiple options from multiple collisions
+    //compare pt against all revised points created in the same collision
     pt = mostRestrictive(target, revisedArr, pt);
     //alert(pt);
     return pt;      //return the x,y position that target should be moved to
@@ -562,7 +588,9 @@ function mostRestrictive(target, revisedArr, pt){//alert("mostRestrictive()");
     return mostRestrictivePt;
 }
 
-// --------------------------- Actions --------------------------------- //
+//============================================================================//
+//                                game actions                                //
+//============================================================================//
 
 function pickup(){ //alert("pickup()");
     
@@ -644,7 +672,7 @@ function powerpackResponse(){alert("powerpackResponse()");
 
 function dropZoneResponse() {
     alert("drop zone response")
-    if(parcel.carried && parcel.landed) {
+    if(parcel.carried && dContainer.landed) {
         alert("You Win!");
     }
 
