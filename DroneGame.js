@@ -348,6 +348,9 @@ function runGame(e){ //alert("runGame()");
             }
         }
         
+        //if(dContainer.landed){
+        //    alert(dContainer.landed);
+        //}
          detectLanding(parcel);
 
         debugText.text = "dContainer landed? " + dContainer.landed;
@@ -748,13 +751,14 @@ function performCollisionDetection(target, nextX, nextY){
     return collisionArr;
 }
 
+/*
+ a clone is created because the function revisePosition() needs to consider where the child currently is in relation to the object it is colliding with in order to properly calculate what to do. We cannot use the child itself because it represents the future position of the object, not its current position.
+ */
+
 //helper
 function getChildClone(child){
     
     var globalPt;
-/*
- a clone is created because the function revisePosition() needs to consider where the child currently is in relation to the object it is colliding with in order to properly calculate what to do. We cannot use the child itself because it represents the future position of the object, not its current position.
- */
 
     //Shape
     var childClone = new createjs.Shape();
@@ -808,6 +812,7 @@ function updatePosition(target){
     var nextX, nextY;
     var collisionArr = [];  //array to hold all objects target / child collides with
     var pt;                 //position to move target to for resolving collision
+    var possibleChildPts = [];
     
     //Step 1 - calculate next position of target
     pt = calcNextPosition(target);
@@ -841,11 +846,16 @@ function updatePosition(target){
                 //remove shift from chosen revised position
                 pt.x -= child.x;    //x shift of child inside container
                 pt.y -= child.y;    //y shift of child inside container
+                
+                possibleChildPts.push(pt);  //store for comparison later
             }
        
         } // end for
-
         
+        //determine most restrictive of the child points
+        pt = mostRestrictive(target, possibleChildPts, pt);
+  
+                             
         //Step 2 B - after processing children check if nextX, nextY needs changing
         if(pt.x !== -100) { //collision changed x value
             nextX = pt.x;
