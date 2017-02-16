@@ -3,8 +3,12 @@ const D_KEY = 68;
 const ESC_KEY = 27;
 const SPACEBAR = 32;
 
+<<<<<<< Updated upstream
 var debugText;
 
+=======
+<<<<<<< HEAD
+>>>>>>> Stashed changes
 //createjs objects
 var queue, stage;
 
@@ -15,7 +19,19 @@ var gameObjectsArr = [];   //contains all game objects not in dContainer;
 var movingArr = [];    //contains all moving objects;
 var globalPoint;    //**new version
 
+<<<<<<< Updated upstream
 var aKeyDown = dKeyDown = escKeyDown = spacebarDown = false;   //keyboard input flags
+=======
+=======
+var debugText;
+var queue, stage; //createjs objects
+var sky, dContainer, drone, parcel, wall1, wall2, line, pauseText, dropZone;  //game objects
+var gameObjects = [];   //contains all game objects not in dContainer
+var revisedArr = [];   //**bug fix contains potential revisions pts to travel to
+>>>>>>> master
+
+var aKeyDown, dKeyDown, escKeyDown, spacebarDown = false;   //keyboard input flags
+>>>>>>> Stashed changes
 var gameOver = courseOver = false;
 
 //starting positions
@@ -86,14 +102,28 @@ function buildgameObjectsArr(){//alert("buildgameObjectsArr()");
     debugText.y = stage.canvas.height - 20;
     
     //Add objects to Stage
+<<<<<<< Updated upstream
     stage.addChild(sky, dContainer, parcel, wall1, wall2, line, pauseText, dropZone, debugText);
+=======
+<<<<<<< HEAD
+    stage.addChild(sky, dContainer, parcel, wall1, wall2, line, pauseText, dropZone);
+>>>>>>> Stashed changes
 
     //Add game objects to array
     gameObjects.push(parcel,wall1, wall2, dropZone);
   
     //add objects to moving array
     movingArr.push(dContainer);
+<<<<<<< Updated upstream
 
+=======
+=======
+  stage.addChild(sky, dContainer, parcel, wall1, wall2, line, pauseText, dropZone, debugText);
+
+    //Add game objects to array
+    gameObjects.push(parcel,wall1, wall2, dropZone);
+>>>>>>> master
+>>>>>>> Stashed changes
     
     stage.update();
 }
