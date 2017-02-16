@@ -3,17 +3,19 @@ const D_KEY = 68;
 const ESC_KEY = 27;
 const SPACEBAR = 32;
 
+var debugText;
+
 //createjs objects
 var queue, stage;
 
 //game objects
 var sky, dContainer, drone, parcel, wall1, wall2, line, pauseText, dropZone;
+
 var gameObjectsArr = [];   //contains all game objects not in dContainer;
 var movingArr = [];    //contains all moving objects;
 var globalPoint;    //**new version
 
-
-var aKeyDown, dKeyDown, escKeyDown, spacebarDown = false;   //keyboard input flags
+var aKeyDown = dKeyDown = escKeyDown = spacebarDown = false;   //keyboard input flags
 var gameOver = courseOver = false;
 
 //starting positions
@@ -74,16 +76,24 @@ function buildgameObjectsArr(){//alert("buildgameObjectsArr()");
     buildPackage();
     buildLine();
     buildPauseMenu();
-    buildDropZone();
+    buildDropZone(wall2);
+
+    // adding a Text display object to display properties during game
+
+
+    debugText = new createjs.Text("Parcel carried: " + parcel.carried + "Parcel landed: " + parcel.landed, "15px Arial", "#f00911");
+    debugText.x =10;
+    debugText.y = stage.canvas.height - 20;
     
     //Add objects to Stage
-    stage.addChild(sky, dContainer, parcel, wall1, wall2, line, pauseText, dropZone);
+    stage.addChild(sky, dContainer, parcel, wall1, wall2, line, pauseText, dropZone, debugText);
 
     //Add game objects to array
-    gameObjectsArr.push(wall1, wall2, parcel);
-    
+    gameObjects.push(parcel,wall1, wall2, dropZone);
+  
     //add objects to moving array
     movingArr.push(dContainer);
+
     
     stage.update();
 }
@@ -113,13 +123,21 @@ function buildBackground(){//alert("buildBackground());
     sky.x = sky.y = 0;
 }
 
-function buildDropZone(){
+function buildDropZone(wall){
     var dz = new createjs.Graphics();
     dz.beginStroke("#0204FA").beginFill("#2FC4FA").drawRect(0,0,50,50);
 
     dropZone = new createjs.Shape(dz);
-    dropZone.x = dropZone.y = 500;
-    dropZone.alpha = 0.5;
+    dropZone.setBounds(dropZone.x, dropZone.y, 50, 50);
+
+    dropZone.regX = dropZone.x + 25;
+    dropZone.regY = dropZone.y + 50;
+    dropZone.alpha = 0.3;
+
+    dropZone.x = wall.x + wall.width / 2;
+    dropZone.y = wall.y -2;
+
+    dropZone.onCollision = dropZoneResponse;
 
 }
 
@@ -297,8 +315,8 @@ function runGame(e){ //alert("runGame()");
             updatePosition(dContainer);
             renderPosition(dContainer);
         }
-        
-        
+
+        debugText.text = "Dropzone intersects dContainer?: " + dropZone.getBounds().intersects(dContainer.getBounds());
         stage.update();
     }
 }
@@ -631,6 +649,14 @@ function hazardResponse(){alert("hazardResponse()");
 
 function powerpackResponse(){alert("powerpackResponse()");
     
+}
+
+function dropZoneResponse() {
+    alert("drop zone response")
+    if(parcel.carried && parcel.landed) {
+        alert("You Win!");
+    }
+
 }
 
 
