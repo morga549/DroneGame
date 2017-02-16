@@ -110,8 +110,8 @@ function buildGameObjects(){//alert("buildgameObjectsArr()");
     //locate the drone and parcel at the start of the course
     droneHomeX = 75;
     droneHomeY = 75;
-    parcelHomeX = 100;
-    parcelHomeY = stage.canvas.height-40;
+    parcelHomeX = 300;
+    parcelHomeY = 50;
     
     //build all objects
     buildBackground();
@@ -132,10 +132,10 @@ function buildGameObjects(){//alert("buildgameObjectsArr()");
     stage.addChild(sky, dContainer, parcel, wall1, wall2, line, pauseText, dropZone, debugText);
 
     //Add game objects to array
-    gameObjectsArr.push(parcel,wall1, wall2, dropZone);
+    gameObjectsArr.push(wall1, wall2, dropZone);
   
     //add objects to moving array
-    movingArr.push(dContainer);
+    movingArr.push(dContainer, parcel);
     
     stage.update();
 }
@@ -179,7 +179,6 @@ function buildDropZone(wall){
     dropZone.name = "dropZone";
     dropZone.onCollision = dropZoneResponse;
     dropZone.setBounds(dropZone.x, dropZone.y, 50, 50);
-    dropZone.name = "dropZone";
 
 }
 
@@ -263,7 +262,8 @@ function buildContainer() { //alert("buildContainer()");
 
 function buildLine(){ //??temp function for diagnosis purposes, TO BE DELETED
     var l = new createjs.Graphics();
-    l.beginStroke("red").drawRect(0,0,259,173);
+    l.beginStroke("red").drawRect(0,0,268,107);
+    l.beginStroke("red").drawRect(268,107,100,73);
     line = new createjs.Shape(l);
 }
 
@@ -275,9 +275,9 @@ function buildPackage(){ //alert("buildPackage());
     parcel.x = parcel.nextX = parcelHomeX;
     parcel.y = parcel.nextY = parcelHomeY;
     parcel.name = "parcel";
-    parcel.landed = true;     //whether the parcel is on a platform
+    parcel.landed = false;     //whether the parcel is on a platform
     parcel.direction = 0; //1 = moving right, -1 = moving left, 0 = straight down
-    parcel.speed = 0;
+    parcel.speed = 2;
     parcel.onCollision = neutralResponse; //method to call in case of collision
     parcel.isContainer = false;
     parcel.carried = false;
@@ -314,12 +314,12 @@ function buildWalls(){ //alert("buildWalls()");
 
     //wall 2
     var w2 = new createjs.Graphics();
-    w2.beginFill("red").drawRect(0,0,100,10);
+    w2.beginFill("black").drawRect(0,0,300,10);
     
     wall2 = new createjs.Shape(w2);
     wall2.x = wall1.x+10;
     wall2.y = 250;
-    wall2.width = 100;
+    wall2.width = 300;
     wall2.height = 10;
     wall2.name = "wall2";
     wall2.onCollision = neutralResponse; //method to call in case of collision
@@ -341,18 +341,16 @@ function runGame(e){ //alert("runGame()");
     
     if(!e.paused){
         
+        detectLanding(parcel);
+        
         for(i = 0; i < movingArr.length; i++){
             
             if(!movingArr[i].landed) {
                 updatePosition(movingArr[i]);
                 renderPosition(movingArr[i]);
+                //alert(movingArr[i]);
             }
         }
-        
-        //if(dContainer.landed){
-        //    alert(dContainer.landed);
-        //}
-         detectLanding(parcel);
 
         debugText.text = "Dropzone intersects dContainer?: " + dropZone.getBounds().intersects(dContainer.getBounds()) + "\t Carried: " + parcel.carried + "\t Landed: " + dContainer.landed;
 
@@ -384,7 +382,7 @@ function detectKey(e){ //alert("detectKey()");
                 alert("restart course");
             }
             else if (!parcel.carried){
-                pickup();
+                checkPickup(parcel);
             }
             else if (parcel.carried){
                 drop();
@@ -408,7 +406,7 @@ function removeKey(e){ //alert("removeKey()");
 function moveUp(e){ //alert("moveUp()");
     
     drone.up = true;
-    dContainer.landed = false;
+    drone.landed = dContainer.landed = false;
     
     if(parcel.carried) {
         parcel.landed = false;
@@ -605,40 +603,69 @@ function mostRestrictive(target, revisedArr, pt){//alert("mostRestrictive()");
 //============================================================================//
 //                                game actions                                //
 //============================================================================//
+function checkPickup(target){
+    
+    var droneBounds, targetBounds;
+    
+    if(dContainer.landed){  //must land to pick up objects
+        
+        //get current bounds of drone
+        droneBounds = drone.getBounds();
+        
+        //adjust to reduce pickup area to black grabbing pad only
+        droneBounds.x += (drone.width - 24)/2;
+        droneBounds.width = 24;
+        //alert(droneBounds);
+        
+        //get target bounds to compare against
+        targetBounds = target.getBounds();
+        
+        if(droneBounds.intersects(targetBounds)){
+            //alert("intersect");
+            pickup(target);
+        }
+    }
+}
 
-function pickup(){ //alert("pickup()");
+
+function pickup(target){ //alert("pickup()");
     
     var index;
     var adjustedX, adjustedY;
     
     
     //remove parcel from array of game objects
-    index = gameObjectsArr.indexOf(parcel); //get index of parcel in array
+    index = gameObjectsArr.indexOf(target); //get index of parcel in array
     
     if(index !== -1)    //parcel is in the array
     {
             gameObjectsArr.splice(index,1);    //remove parcel from array
     }
     
+    //alert(movingArr.indexOf(parcel));
+    
     //add Package to dContainer
-    dContainer.addChild(parcel);   //adding to dContainer removes from Stage
+    dContainer.addChild(target);   //adding to dContainer removes from Stage
     
     //update dContainer properties
-    dContainer.height += parcel.height;
+    dContainer.height += target.height;
     
     //update Package properties
-    parcel.carried = true;
+    target.carried = true;
     //alert("carried");
     
     //determine correct position inside container
-    adjustedX = (dContainer.width - parcel.width) /2;
+    adjustedX = (dContainer.width - target.width) /2;
     adjustedY = drone.height;
+    target.x = adjustedX;
+    target.y = adjustedY;
     
     //move parcel to exact position
-    createjs.Tween.get(parcel).to({x:adjustedX, y:adjustedY}, 100, createjs.Ease.quadOut);
+    //createjs.Tween.get(target).to({x:adjustedX, y:adjustedY}, 100, createjs.Ease.quadOut);
     
     //adjust parcel bounds to match position relative to container
-    parcel.setBounds(parcel.x, parcel.y, parcel.width, parcel.height);
+    target.setBounds(target.x, target.y, target.width, target.height);
+    //alert("Container: " + dContainer.x + "," + dContainer.y + "," + dContainer.height + "\nParcel: " + target.x +"," + target.y);
 }
 
 
@@ -648,10 +675,10 @@ function drop(){ //alert("drop()");
     var shiftX = (dContainer.width - parcel.width) /2;
     var shiftY = drone.height;
     var globalPt = parcel.localToGlobal(parcel.x-shiftX, parcel.y-shiftY);
-    
+    //alert(globalPt);
     //move to correct position inside stage
     parcel.x = parcel.nextX = globalPt.x;
-    parcel.y = parcel.nextY = globalPt.y;
+    parcel.y = parcel.nextY = globalPt.y-3;
     
     //adjusts bounds to match position relative to stage
     parcel.setBounds(parcel.x, parcel.y, parcel.width, parcel.height);
@@ -661,6 +688,7 @@ function drop(){ //alert("drop()");
     
     //add Package to movingArr
     movingArr.push(parcel);
+    //gameObjectsArr.push(parcel);
     
     //update properties
     parcel.direction = dContainer.direction;
@@ -686,7 +714,7 @@ function powerpackResponse(){alert("powerpackResponse()");
 }
 
 function dropZoneResponse() { //alert("dropZoneResponse()");
-    alert("carried: " + parcel.carried + "," + "landed: " + dContainer.landed)
+    //alert("carried: " + parcel.carried + "," + "landed: " + dContainer.landed)
 
     if(parcel.carried && dContainer.landed) {
         alert("You Win!");
@@ -823,7 +851,7 @@ function updatePosition(target){
     pt = calcNextPosition(target);
     nextX = pt.x;
     nextY = pt.y;
-
+    //if(target.name === "parcel"){alert(nextX +"," + nextY);}
     //Step 2 - perform collision detection based on that next position
     if(target.isContainer){
         
@@ -871,15 +899,15 @@ function updatePosition(target){
         
     } //end collision detection for container
     else { //target is not a container
-        
+
         //perform collision detection
         collisionArr = performCollisionDetection(target, nextX, nextY);
-        
+
         //perform position revision
         if(collisionArr.length > 0){ //hit something
-         
+            //alert(collisionArr);
             pt = performPositionRevision(target, collisionArr, nextX, nextY);
-            
+            //alert(pt);
         } //end if
     } //end collision detection for standalone object
     
@@ -890,7 +918,6 @@ function updatePosition(target){
     //alert(pt);
     if(pt.x !== -100){ //horizontal edge-of-frame occurred
         nextX = pt.x;
-        //alert("horizontal");
     }
     if(pt.y !== -100){  //vertical edge-of-frame occurred
         nextY = pt.y;
@@ -903,7 +930,7 @@ function updatePosition(target){
 
 
 function renderPosition(target){
-    
+    //if(target.name === "parcel"){alert(target.nextX + "," + target.nextY);}
     //move target to calculated next position
     target.x = target.nextX;
     target.y = target.nextY;
@@ -911,7 +938,9 @@ function renderPosition(target){
     //update bounds to match new position
     target.setBounds(target.x, target.y, target.width, target.height);
     
-    //**updateChildrenBounds(); //need to do this as well??
+    if(target.isContainer){
+        updateChildrenBounds(target, target.x, target.y);
+    }
     
     
     if( target.isContainer && drone.up){
@@ -926,18 +955,41 @@ function detectLanding(target){ //alert("detectLanding()");
     var index = gameObjectsArr.indexOf(target);
     
     //if parcel is not in game array and parcel landed
-    //and parcel is not inside the container, add to game objects array again
+    //and parcel is not inside the container, add to game objects array
     if( index === -1 && !target.carried && target.landed){
         gameObjectsArr.push(target);
-        
-        //remove parcel from movingArr as well
-        index = movingArr.indexOf(target);
-        movingArr.splice(index,1);
-        
-        //alert("detect parcel landing on its own");
     }
+    
+    //if parcel is in the movingArray, remove it
+    index = movingArr.indexOf(target);
+    if(target.landed && index !== -1)
+    {
+        movingArr.splice(index,1);
+        //alert(movingArr.indexOf(target));
+        //alert(target.x +"," + target.y);
+    }
+    
+    
+    
 }
 
+function updateChildrenBounds(container, cX, cY){
+    
+    var i, xShift, yShift;
+    for(i = 0; i < container.numChildren; i++){
+        
+        var child = container.children[i];
+        //alert(child.getBounds());
+        xShift = child.x;
+        yShift = child.y;
+        
+        //child bounds set to correspond to bounds relative to stage
+        child.setBounds(container.x + xShift, container.y + yShift, child.width, child.height);
+        //alert(child.getBounds());
+        
+    }
+    
+}
 
 
 //============================================================================//
