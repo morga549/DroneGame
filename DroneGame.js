@@ -31,10 +31,10 @@
  - Overview
  - Variables
  - Startup Functions
- - Courses
+ - Game mechanics
  - Game GUI
+ - Courses
  - Game Objects
- - game mechanics
  - collision detection
  - game actions
  - movable object update / rendering
@@ -55,6 +55,7 @@ const A_KEY = 65;
 const D_KEY = 68;
 const ESC_KEY = 27;
 const SPACEBAR = 32;
+const COURSE_1_TIME = 1000*60*2.5;    //2 min
 
 //diagnostic
 var debugText;
@@ -64,7 +65,7 @@ var queue, stage;
 
 //game objects
 var dContainer, drone, parcel, ocean, dropZone;
-var pauseText;
+var pauseText, timerText, min, sec;
 var waveInterval; //reference to window interval for wave animation
 
 //starting positions per course
@@ -81,6 +82,7 @@ var gameObjectsArr = [];   //contains all game objects not in dContainer
 var movingArr = [];        //contains all moving objects not in a container
 var aKeyDown = dKeyDown = escKeyDown = spacebarDown = false; //keyboard input flags
 var gameOver = courseOver = false;
+
 
 
 
@@ -102,9 +104,8 @@ function init() { //alert("init()");
     
     stage = new createjs.Stage("canvas");
     
-    
     buildCourse1();
-    buildGUI();
+    buildGUI(); //after building course, so that text appears over image
     startGame();
 }
 
@@ -123,6 +124,174 @@ function startGame(){ //alert("startGame()");
     waveInterval = window.setInterval(moveWaves, 1000);
 }
 
+
+
+//============================================================================//
+//                              game mechanics                                //
+//============================================================================//
+
+function runGame(e){ //alert("runGame()");
+    var i;
+    
+    if(!e.paused){
+        
+        detectLanding(parcel);
+        
+        for(i = 0; i < movingArr.length; i++){
+            
+            if(!movingArr[i].landed) {
+                updatePosition(movingArr[i]);
+                renderPosition(movingArr[i]);
+                //alert(movingArr[i]);
+            }
+        }
+        
+        debugText.text = "Dropzone intersects dContainer?: " + dropZone.getBounds().intersects(dContainer.getBounds()) + "\t Carried: " + parcel.carried + "\t Landed: " + dContainer.landed;
+        
+        updateTimer(e.runTime, "white");
+        //alert(e.runTime);
+        stage.update();
+    }
+}
+
+
+function pauseGame(e) { //alert("pauseGame()");
+    createjs.Ticker.paused = !createjs.Ticker.paused;
+    pauseText.visible = !pauseText.visible;
+    stage.update();
+    
+    if(createjs.Ticker.paused){
+        window.clearInterval(waveInterval); //remove interval from window
+    } else{
+        waveInterval = window.setInterval(moveWaves, 1000); //add interval to window
+    }
+}
+
+function detectKey(e){ //alert("detectKey()");
+    e = !e ? window.event : e; //if event is not event, get window.event;
+    switch(e.keyCode) {
+        case A_KEY:
+            aKeyDown = true;
+            break;
+        case D_KEY:
+            dKeyDown = true;
+            break;
+        case ESC_KEY:
+            pauseGame();
+            break;
+        case SPACEBAR:
+            if(createjs.Ticker.paused){
+                alert("restart course");
+            }
+            else if (!parcel.carried){
+                checkPickup(parcel);
+            }
+            else if (parcel.carried){
+                drop(parcel);
+            }
+            break;
+    }
+}
+
+function removeKey(e){ //alert("removeKey()");
+    e = !e ? window.event : e;  //if event is not event, get window.event;
+    switch(e.keyCode) {
+        case A_KEY:
+            aKeyDown = false;
+            break;
+        case D_KEY:
+            dKeyDown = false;
+            break;
+    }
+}
+
+function moveUp(e){ //alert("moveUp()");
+    
+    drone.up = true;
+    drone.landed = dContainer.landed = false;
+    
+    if(parcel.carried) {
+        parcel.landed = false;
+    }
+}
+
+function moveDown(e){ //alert("moveDown()");
+    
+    drone.up = false;
+}
+
+
+
+//============================================================================//
+//                                  game gui                                  //
+//============================================================================//
+
+function buildGUI(){ //alert("buildGUI()");
+    
+    buildPauseMenu("#f0e906");
+    buildGameTimer("white");
+    
+    //diagnostic
+    //buildLine();
+    buildDebugText();
+}
+
+function buildPauseMenu(color) { //alert("buildPauseMenu()");
+    
+    pauseText = new createjs.Text("Game Paused!\n\nESC to resume.\nSPACEBAR to restart.", "40px Arial", color);
+    pauseText.x = stage.canvas.width/2;
+    pauseText.y = stage.canvas.height/3.5;
+    pauseText.textAlign = "center";
+    pauseText.shadow = new createjs.Shadow("#000000", 0, 0, 50);
+    pauseText.visible = false;
+    
+    stage.addChild(pauseText);
+}
+
+function buildGameTimer(color){
+    
+    convertTime(COURSE_1_TIME);
+    timerText = new createjs.Text("Time Remaining: " + min + ":" + sec, "30px Arial", color);
+    timerText.x = stage.canvas.width - 325;
+    timerText.y = 10;
+    stage.addChild(timerText);
+}
+
+function buildLine(){ //for diagnostic purposes
+    
+    var line = new createjs.Shape();
+    line.graphics.beginStroke("red").drawRect(0,0,268,107);
+    stage.addChild(line);
+}
+
+/*
+ Function adds a Text display object to display object properties during game.
+ */
+function buildDebugText(){  //alert("buildDebugText()");//for diagnostic purposes
+    
+    debugText = new createjs.Text("", "15px Arial", "red");
+    debugText.x = 10;
+    debugText.y = 550;
+    stage.addChild(debugText);
+}
+
+function convertTime(ms){ //alert("convertTime()");
+    
+    //convert course time in milliseconds into minutes and seconds
+    var totalSec = Math.floor(ms/1000);
+    min = Math.floor(totalSec / 60);    //whole minutes
+    sec = (totalSec % 60);              //extra seconds
+}
+
+function updateTimer(t, color){ //alert("updateTimer()");
+    convertTime(t);
+    timerText.text = "Time Remaining: " + min + ":" + sec;
+}
+
+
+
+
+
 //============================================================================//
 //                                    courses                                 //
 //============================================================================//
@@ -137,7 +306,7 @@ function buildCourse1(){ //alert("buildCourse1()");
     
     //add game neutral objects
     buildBackground("sky1");
-    buildWall(0,150,175,15,"black");    //starting platform drone and parcel
+    buildWall(0,150,170,15,"black");    //starting platform drone and parcel
     buildWall(275,0,10,400,"black");
     buildWall(425,250,10,265,"black");
     buildWall(425,250,300,10,"black");
@@ -161,47 +330,6 @@ function buildCourse1(){ //alert("buildCourse1()");
 
 
  
-//============================================================================//
-//                                  game gui                                  //
-//============================================================================//
-
-function buildGUI(){ //alert("buildGUI()");
-    
-    buildPauseMenu();
-
-    //diagnostic
-    //buildLine();
-    buildDebugText();
-}
-
-function buildPauseMenu() { //alert("buildPauseMenu()");
-    
-    pauseText = new createjs.Text("Game Paused!\n\nESC to resume.\nSPACEBAR to restart.", "40px Arial", "#f0e906");
-    pauseText.x = stage.canvas.width/2;
-    pauseText.y = stage.canvas.height/3.5;
-    pauseText.textAlign = "center";
-    pauseText.shadow = new createjs.Shadow("#000000", 0, 0, 50);
-    pauseText.visible = false;
-    
-    stage.addChild(pauseText);
-}
-
-function buildLine(){ //for diagnostic purposes
-
-    var line = new createjs.Shape();
-    line.graphics.beginStroke("red").drawRect(0,0,268,107);
-    stage.addChild(line);
-}
-
-/* 
- Function adds a Text display object to display object properties during game.
- */
-function buildDebugText(){  //alert("buildDebugText()");//for diagnostic purposes
-    
-    debugText = new createjs.Text("", "15px Arial", "red");
-    debugText.x = debugText.y = 10;
-    stage.addChild(debugText);
-}
 
 
 //============================================================================//
@@ -387,102 +515,6 @@ function buildOcean(n, h, depth, a, b){
     stage.addChild(ocean);      //add to stage
     gameObjectsArr.push(ocean); //add to collidable objects
 }
-
-
-
-
-//============================================================================//
-//                              game mechanics                                //
-//============================================================================//
-
-function runGame(e){ //alert("runGame()");
-    var i;
-    
-    if(!e.paused){
-        
-        detectLanding(parcel);
-
-        for(i = 0; i < movingArr.length; i++){
-            
-            if(!movingArr[i].landed) {
-                updatePosition(movingArr[i]);
-                renderPosition(movingArr[i]);
-                //alert(movingArr[i]);
-            }
-        }
-
-        debugText.text = "Dropzone intersects dContainer?: " + dropZone.getBounds().intersects(dContainer.getBounds()) + "\t Carried: " + parcel.carried + "\t Landed: " + dContainer.landed;
-
-        stage.update();
-    }
-}
-
-
-function pauseGame(e) { //alert("pauseGame()");
-    createjs.Ticker.paused = !createjs.Ticker.paused;
-    pauseText.visible = !pauseText.visible;
-    stage.update();
-    
-    if(createjs.Ticker.paused){
-        window.clearInterval(waveInterval); //remove interval from window
-    } else{
-        waveInterval = window.setInterval(moveWaves, 1000); //add interval to window
-    }
-}
-
-function detectKey(e){ //alert("detectKey()");
-    e = !e ? window.event : e; //if event is not event, get window.event;
-    switch(e.keyCode) {
-        case A_KEY:
-            aKeyDown = true;
-            break;
-        case D_KEY:
-            dKeyDown = true;
-            break;
-        case ESC_KEY:
-            pauseGame();
-            break;
-        case SPACEBAR:
-            if(createjs.Ticker.paused){
-                alert("restart course");
-            }
-            else if (!parcel.carried){
-                checkPickup(parcel);
-            }
-            else if (parcel.carried){
-                drop(parcel);
-            }
-            break;
-    }
-}
-
-function removeKey(e){ //alert("removeKey()");
-    e = !e ? window.event : e;  //if event is not event, get window.event;
-    switch(e.keyCode) {
-        case A_KEY:
-            aKeyDown = false;
-            break;
-        case D_KEY:
-            dKeyDown = false;
-            break;
-    }
-}
-
-function moveUp(e){ //alert("moveUp()");
-    
-    drone.up = true;
-    drone.landed = dContainer.landed = false;
-    
-    if(parcel.carried) {
-        parcel.landed = false;
-    }
-}
-
-function moveDown(e){ //alert("moveDown()");
-    
-    drone.up = false;
-}
-
 
 
 
