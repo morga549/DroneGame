@@ -68,7 +68,7 @@ var queue, stage;
 
 //game objects
 var dContainer, drone, parcel, ocean, dropZone;
-var pauseText, timerText, timer, startTime;
+var pauseText, timerText, timer, startTime, pauseRect, startupText;
 var droneHomeX, droneHomeY, parcelHomeX, parcelHomeY;//starting positions per course
 var waveAnimation; //reference to window interval for wave animation
 
@@ -97,8 +97,9 @@ function load() { //alert("load()");
     queue = new createjs.LoadQueue(false);
     queue.addEventListener("complete", init);
     queue.loadManifest([
-        {id:"sky1", src:"Sky1.png"},    //day
-        {id:"sky2", src:"Sky2.png"}     //night
+        {id:"sky1", src:"Sky1.png"},            //day
+        {id:"sky2", src:"Sky2.png"},            //night
+        {id:"startup", src:"Startup.png"}       //startup screen
     ]);
 }
 
@@ -106,24 +107,65 @@ function init() { //alert("init()");
     
     stage = new createjs.Stage("canvas");
     
-    buildCourse1();
-    buildGUI(); //after building course, so that text appears over image
-    startGame();
+    startupSequence();
+    
+
+    //startGame();
 }
 
-function startGame(){ //alert("startGame()");
-    //Ticker
+function startupSequence(){ //alert("startupSequence()"
+    
+    var image = queue.getResult("startup");
+    
+    //create bitmap object of startup image
+    var startup = new createjs.Bitmap(image);
+    startup.x = startup.y = 0;
+    stage.addChild(startup);
+    stage.update();
+    
+    //fade it out
     createjs.Ticker.framerate = 60;
-    createjs.Ticker.addEventListener("tick", runGame);
+    createjs.Ticker.addEventListener("tick", function(e) { stage.update(); });
+    createjs.Tween.get(startup).wait(2000).to({alpha:0}, 2000).call(removeStartup);
+}
+
+function removeStartup(){ //alert("removeStartup()");
     
-    //listen for key / mouse events
-    window.onkeydown  = detectKey;
-    window.onkeyup = removeKey;
-    window.onmousedown = moveUp;
-    window.onmouseup = moveDown;
+    createjs.Ticker.removeAllEventListeners();  //restart runGame time
+    createjs.Ticker.reset();
+    buildCourse1();
+    buildGUI(); //after building course, so that text appears over image
     
-    //animation
-    waveAnimation = window.setInterval(moveWaves, WAVE_INT);
+    
+    //explanation of gameplay
+    buildPauseRect(500,300,"white");
+    buildStartUpMessage();
+    window.onkeydown = startGame;
+    
+}
+
+
+function startGame(e){ //alert("startGame()");
+
+    if(e.keyCode == SPACEBAR){
+        
+        //remove event listener
+        e.target.removeEventListener("onkeydown", startGame);
+        stage.removeChild(pauseRect, startupText);
+
+        //Ticker
+        createjs.Ticker.framerate = 60;
+        createjs.Ticker.addEventListener("tick", runGame);
+        
+        //listen for key / mouse events
+        window.onkeydown  = detectKey;
+        window.onkeyup = removeKey;
+        window.onmousedown = moveUp;
+        window.onmouseup = moveDown;
+        
+        //animation
+        waveAnimation = window.setInterval(moveWaves, WAVE_INT);
+    }
 }
 
 
@@ -285,6 +327,20 @@ function buildPauseMenu(color) { //alert("buildPauseMenu()");
     stage.addChild(pauseText);
 }
 
+function buildPauseRect(w,h,color){ //alert("buildPauseRect()");
+    
+    pauseRect = new createjs.Shape();
+    pauseRect.width = w;
+    pauseRect.height = h;
+    pauseRect.graphics.beginStroke("black").beginFill(color).drawRect(0,0,pauseRect.width,pauseRect.height);
+    pauseRect.regX = pauseRect.width/2;
+    pauseRect.regY = pauseRect.height/2;
+    pauseRect.x = stage.canvas.width/2;
+    pauseRect.y = stage.canvas.height/2;
+    
+    stage.addChild(pauseRect);
+}
+
 function buildGameTimer(color){
     //alert(startTime);
     var min, sec, message;
@@ -297,7 +353,7 @@ function buildGameTimer(color){
     //set as text
     message = "Time Remaining: " + min + ":" + sec;
     timerText = new createjs.Text(message, "30px Arial", color);
-    timerText.x = stage.canvas.width - 350;
+    timerText.x = stage.canvas.width - 315;
     timerText.y = 10;
     
     stage.addChild(timerText);
@@ -344,7 +400,25 @@ function updateTimer(t){ //alert("updateTimer()");
     }
 }
 
-
+function buildStartUpMessage(){ //alert("buildStartUpMessage()");
+    
+    var m1 = "                             Welcome to Drone Delivery!\n\n";
+    
+    var m2 = "GOAL:\nPickup and deliver the Package to the Drop Zone. Land in the\nDrop Zone while carrying the Package.\n\nAvoid hazards like birds and water. You must beat the Timer too!\n\n";
+    
+    var m3 = "CONTROLS:\nMouse Button Down: fly upward\nLeft Arrow Key: move left\nRight Arrow Key: move right\n\n";
+    
+    var m4 = "You cannot move while landed. Press ESC to Pause the Game.\n\n";
+    
+    var m5 = "                  - press SPACEBAR to start the game -";
+    
+    startupText = new createjs.Text(m1 + m2 + m3 + m4 + m5, "16px Arial", "black");
+    startupText.x = pauseRect.x - 225;
+    startupText.y = pauseRect.y - 125;
+    
+    stage.addChild(startupText);
+    stage.update();
+}
 
 
 
@@ -359,7 +433,7 @@ function buildCourse1(){ //alert("buildCourse1()");
     droneHomeY = 145;
     parcelHomeX = 130;
     parcelHomeY = 105;
-    
+
     //add game neutral objects
     buildBackground("sky1");
     buildWall(0,150,170,15,"black");    //starting platform drone and parcel
@@ -369,7 +443,7 @@ function buildCourse1(){ //alert("buildCourse1()");
     buildWall(700,500,100,10,"black");
     buildWall(435,500,150,15,"black");  //drop zone platform
     buildDropZone2(434, 350, 150,150, "blue");
-
+    
     //add game hazards
     buildOcean(10,10,15,0,20);
     
