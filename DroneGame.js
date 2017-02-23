@@ -31,6 +31,8 @@
  - Overview
  - Variables
  - Startup Functions
+ - Courses
+ - Game GUI
  - Game Objects
  - game mechanics
  - collision detection
@@ -61,7 +63,7 @@ var debugText;
 var queue, stage;
 
 //game objects
-var sky, dContainer, drone, parcel, wall1, wall2, line, pauseText, dropZone, ocean;
+var dContainer, drone, parcel, dropZone;
 var waveInterval; //reference to window interval for wave animation
 
 //starting positions
@@ -91,7 +93,8 @@ function load() { //alert("load()");
     queue = new createjs.LoadQueue(false);
     queue.addEventListener("complete", init);
     queue.loadManifest([
-        {id:"sky1", src:"Sky1.png"}
+        {id:"sky1", src:"Sky1.png"},    //day
+        {id:"sky2", src:"Sky2.png"}     //night
     ]);
 }
 
@@ -99,45 +102,10 @@ function init() { //alert("init()");
     
     stage = new createjs.Stage("canvas");
     
-    buildGameObjects();
-    startGame();
-}
-
-
-function buildGameObjects(){//alert("buildgameObjectsArr()");
-
-    //locate the drone and parcel at the start of the course
-    droneHomeX = 75;
-    droneHomeY = 75;
-    parcelHomeX = 300;
-    parcelHomeY = 50;
-    
-    //build all objects
-    buildBackground();
-    buildDrone();           //drone before container for proper container bounds
-    buildContainer();
-    buildWalls();
-    buildPackage();
-    buildLine();
-    buildPauseMenu();
-    buildDropZone(wall2);
-    buildOcean(10,10,15,0,20);
-
-    // adding a Text display object to display properties during game
-    debugText = new createjs.Text("", "15px Arial", "black");
-    debugText.x =10;
-    debugText.y = 10;
-    
-    //Add all objects to Stage except drone (drone was added to dContainer)
-    stage.addChild(sky, dContainer, parcel, wall1, wall2, line, ocean, pauseText, dropZone, debugText);
-
-    //Add game objects to array
-    gameObjectsArr.push(wall1, wall2, dropZone,ocean);
-  
-    //add objects to moving array
-    movingArr.push(dContainer, parcel);
-    
-    stage.update();
+    buildGUI();
+    buildCourse1();
+    //buildGameObjects();
+    //startGame();
 }
 
 function startGame(){ //alert("startGame()");
@@ -155,18 +123,125 @@ function startGame(){ //alert("startGame()");
     waveInterval = window.setInterval(moveWaves, 1000);
 }
 
+//============================================================================//
+//                                    courses                                 //
+//============================================================================//
+
+function buildCourse1(){ //alert("buildCourse1()");
+
+    //locate the drone and parcel at the start of the course
+    droneHomeX = 5;
+    droneHomeY = 145;
+    parcelHomeX = 130;
+    parcelHomeY = 105;
+    
+    //add game neutral objects
+    buildBackground("sky1");
+    buildWall(0,150,175,15,"black");
+    buildWall(275,0,10,400,"black");
+    buildWall(425,250,10,265,"black");
+    buildWall(425,250,300,10,"black");
+    buildWall(700,500,100,10,"black");
+    buildWall(435,500,150,15,"black");
+    //buildLine(); //diagnostic
+    
+    //add game hazards
+    buildOcean(10,10,15,0,20);
+    
+    //add actors
+    buildDrone();
+    buildContainer();   //drone before container for proper container bounds
+    buildParcel();
+    
+    stage.update();
+}
+
+
+
+
+
+
+function buildGameObjects(){//alert("buildgameObjectsArr()");
+
+    
+    
+    //build all objects
+    //buildBackground();
+    //buildDrone();           //drone before container for proper container bounds
+    //buildContainer();
+    //buildWalls();
+    //buildParcel();
+    //buildLine();
+    buildPauseMenu();
+    buildDropZone(wall2);
+    //buildOcean(10,10,15,0,20);
+
+    // adding a Text display object to display properties during game
+    debugText = new createjs.Text("", "15px Arial", "black");
+    debugText.x =10;
+    debugText.y = 10;
+    
+    //Add all objects to Stage except drone (drone was added to dContainer)
+    stage.addChild(sky, dContainer, parcel, wall1, wall2, line, ocean, pauseText, dropZone, debugText);
+
+    //Add game objects to array
+    gameObjectsArr.push(wall1, wall2, dropZone,ocean);
+  
+    //add objects to moving array
+    movingArr.push(dContainer, parcel);
+    
+    stage.update();
+}
+//============================================================================//
+//                                  game gui                                  //
+//============================================================================//
+
+function buildGUI(){
+    
+    buildPauseMenu();
+}
+
+function buildPauseMenu() {
+    var pauseText = new createjs.Text("Game Paused!\nEsc to resume.\nSpace to restart", "60px Arial", "#f0e906");
+    pauseText.x = stage.canvas.width/2;
+    pauseText.y = stage.canvas.height/3.5;
+    pauseText.textAlign = "center";
+    pauseText.shadow = new createjs.Shadow("#000000", 0, 0, 50);
+    pauseText.visible = false;
+    
+    stage.addChild(pauseText);
+}
+
 
 //============================================================================//
 //                               game objects                                 //
 //============================================================================//
 
-function buildBackground(){//alert("buildBackground());
+function buildBackground(target){//alert("buildBackground()");
     
-    var image = queue.getResult("sky1");
+    var image = queue.getResult(target);
     
     //create bitmap object
-    sky = new createjs.Bitmap(image);
+    var sky = new createjs.Bitmap(image);
     sky.x = sky.y = 0;
+    stage.addChild(sky);
+}
+
+function buildWall(x,y,w,h, color){ //alert("buildWall()");
+    
+    //create shape object
+    var wall = new createjs.Shape();
+    wall.x = x;
+    wall.y = y;
+    wall.width = w;
+    wall.height = h;
+    wall.name = "wall";
+    wall.onCollision = neutralResponse;
+    wall.graphics.beginFill(color).drawRect(0,0,wall.width, wall.height);
+    
+    //set bounds
+    wall.setBounds(wall.x, wall.y, wall.width, wall.height);
+    stage.addChild(wall);
 }
 
 function buildDropZone(wall){
@@ -233,15 +308,6 @@ function buildDrone() { //alert("buildDrone()");
     drone.setBounds(drone.x,drone.y,drone.width,drone.height);
 }
 
-function buildPauseMenu() {
-    pauseText = new createjs.Text("Game Paused!\nEsc to resume.\nSpace to restart", "80px Arial", "#f0e906");
-    pauseText.x = stage.canvas.width/2;
-    pauseText.y = stage.canvas.height/3.5;
-    pauseText.textAlign = "center";
-    pauseText.shadow = new createjs.Shadow("#000000", 0, 0, 50);
-    pauseText.visible = false; //**maybe make visible false at start, and toggle visible when gamePaused
-}
-
 function buildContainer() { //alert("buildContainer()");
     
     //Container
@@ -261,16 +327,19 @@ function buildContainer() { //alert("buildContainer()");
     
     //set bounds based on contents (i.e. drone)
     dContainer.setBounds(dContainer.x, dContainer.y, dContainer.width, dContainer.height);
+    
+    stage.addChild(dContainer);
 }
 
 function buildLine(){ //??temp function for diagnosis purposes, TO BE DELETED
     var l = new createjs.Graphics();
     l.beginStroke("red").drawRect(0,0,268,107);
     l.beginStroke("red").drawRect(268,107,100,73);
-    line = new createjs.Shape(l);
+    var line = new createjs.Shape(l);
+    stage.addChild(line);
 }
 
-function buildPackage(){ //alert("buildPackage());
+function buildParcel(){ //alert("buildParcel());
     
     //create graphics object
     parcel = new createjs.Shape();
@@ -292,44 +361,12 @@ function buildPackage(){ //alert("buildPackage());
 
     //set bounds
     parcel.setBounds(parcel.x, parcel.y, parcel.width, parcel.height);
+    
+    stage.addChild(parcel);
 }
 
-function buildWalls(){ //alert("buildWalls()");
-    
-    //wall1
-    //create graphics object
-    var w = new createjs.Graphics();
-    w.beginFill("black").drawRect(0,0,10,250);
 
-    
-    
-    //create shape object
-    wall1 = new createjs.Shape(w);
-    wall1.x = stage.canvas.width/2;
-    wall1.y = 180;
-    wall1.width = 10;
-    wall1.height = 250;
-    wall1.name = "wall1";
-    wall1.onCollision = neutralResponse;
 
-    //set bounds
-    wall1.setBounds(wall1.x, wall1.y, wall1.width, wall1.height);
-
-    //wall 2
-    var w2 = new createjs.Graphics();
-    w2.beginFill("black").drawRect(0,0,300,10);
-    
-    wall2 = new createjs.Shape(w2);
-    wall2.x = wall1.x+10;
-    wall2.y = 250;
-    wall2.width = 300;
-    wall2.height = 10;
-    wall2.name = "wall2";
-    wall2.onCollision = neutralResponse; //method to call in case of collision
-    
-    //set bounds
-    wall2.setBounds(wall2.x, wall2.y, wall2.width, wall2.height);
-}
 
 
 function buildOcean(n, h, depth, a, b){
@@ -339,7 +376,7 @@ function buildOcean(n, h, depth, a, b){
     var bezierCommands = [];
     
     //create Shape
-    ocean = new createjs.Shape();
+    var ocean = new createjs.Shape();
     
     //properties
     ocean.x = 0;
@@ -364,7 +401,10 @@ function buildOcean(n, h, depth, a, b){
     //ocean.graphics.endFill();
     //ocean.graphics.beginStroke("red");
     //ocean.graphics.drawRect(ocean.x, 0 +(h/2), stage.canvas.width, (h + depth));
+    stage.addChild(ocean);
 }
+
+
 
 
 //============================================================================//
@@ -1081,7 +1121,44 @@ function moveWaves(e){
 
 
 
-
+/*
+ function buildWalls(){ //alert("buildWalls()");
+ 
+ //wall1
+ //create graphics object
+ var w = new createjs.Graphics();
+ w.beginFill("black").drawRect(0,0,10,250);
+ 
+ 
+ 
+ //create shape object
+ wall1 = new createjs.Shape(w);
+ wall1.x = stage.canvas.width/2;
+ wall1.y = 180;
+ wall1.width = 10;
+ wall1.height = 250;
+ wall1.name = "wall1";
+ wall1.onCollision = neutralResponse;
+ 
+ //set bounds
+ wall1.setBounds(wall1.x, wall1.y, wall1.width, wall1.height);
+ 
+ //wall 2
+ var w2 = new createjs.Graphics();
+ w2.beginFill("black").drawRect(0,0,300,10);
+ 
+ wall2 = new createjs.Shape(w2);
+ wall2.x = wall1.x+10;
+ wall2.y = 250;
+ wall2.width = 300;
+ wall2.height = 10;
+ wall2.name = "wall2";
+ wall2.onCollision = neutralResponse; //method to call in case of collision
+ 
+ //set bounds
+ wall2.setBounds(wall2.x, wall2.y, wall2.width, wall2.height);
+ }
+ */
 
 
 
