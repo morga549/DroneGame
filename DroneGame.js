@@ -394,7 +394,7 @@ function buildStartUpMessage(){ //alert("buildStartUpMessage()");
     
     var m2 = "GOAL:\nPickup and deliver the Package to the Drop Zone. Land in the\nDrop Zone while carrying the Package to finish the course.\n\nAvoid hazards like birds and water. You must beat the Timer too!\n\n";
     
-    var m3 = "CONTROLS:\nClick and Hold the Right Mouse button: fly upward\nA Key: move left\nD Key: move right\n\n";
+    var m3 = "CONTROLS:\nClick and Hold the Left Mouse button to fly upward\nA Key: move left\nD Key: move right\n\n";
     
     var m4 = "You cannot move while landed. Press ESC to pause the game.\n\n";
     
