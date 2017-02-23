@@ -56,19 +56,19 @@ const D_KEY = 68;
 const ESC_KEY = 27;
 const SPACEBAR = 32;
 
-
+//diagnostic
 var debugText;
 
 //createjs objects
 var queue, stage;
 
 //game objects
-var dContainer, drone, parcel, dropZone;
+var dContainer, drone, parcel, ocean, dropZone;
+var pauseText;
 var waveInterval; //reference to window interval for wave animation
 
-//starting positions
-var droneHomeX, droneHomeY;   //dContainer/drone
-var parcelHomeX, parcelHomeY;  //parcel
+//starting positions per course
+var droneHomeX, droneHomeY, parcelHomeX, parcelHomeY;
 
 //drone customization
 var d_beginFillBody;
@@ -102,10 +102,10 @@ function init() { //alert("init()");
     
     stage = new createjs.Stage("canvas");
     
-    buildGUI();
+    
     buildCourse1();
-    //buildGameObjects();
-    //startGame();
+    buildGUI();
+    startGame();
 }
 
 function startGame(){ //alert("startGame()");
@@ -128,7 +128,7 @@ function startGame(){ //alert("startGame()");
 //============================================================================//
 
 function buildCourse1(){ //alert("buildCourse1()");
-
+    
     //locate the drone and parcel at the start of the course
     droneHomeX = 5;
     droneHomeY = 145;
@@ -137,14 +137,14 @@ function buildCourse1(){ //alert("buildCourse1()");
     
     //add game neutral objects
     buildBackground("sky1");
-    buildWall(0,150,175,15,"black");
+    buildWall(0,150,175,15,"black");    //starting platform drone and parcel
     buildWall(275,0,10,400,"black");
     buildWall(425,250,10,265,"black");
     buildWall(425,250,300,10,"black");
     buildWall(700,500,100,10,"black");
-    buildWall(435,500,150,15,"black");
-    //buildLine(); //diagnostic
-    
+    buildWall(435,500,150,15,"black");  //drop zone platform
+    buildDropZone2(434, 350, 150,150, "blue");
+
     //add game hazards
     buildOcean(10,10,15,0,20);
     
@@ -160,49 +160,23 @@ function buildCourse1(){ //alert("buildCourse1()");
 
 
 
-
-function buildGameObjects(){//alert("buildgameObjectsArr()");
-
-    
-    
-    //build all objects
-    //buildBackground();
-    //buildDrone();           //drone before container for proper container bounds
-    //buildContainer();
-    //buildWalls();
-    //buildParcel();
-    //buildLine();
-    buildPauseMenu();
-    buildDropZone(wall2);
-    //buildOcean(10,10,15,0,20);
-
-    // adding a Text display object to display properties during game
-    debugText = new createjs.Text("", "15px Arial", "black");
-    debugText.x =10;
-    debugText.y = 10;
-    
-    //Add all objects to Stage except drone (drone was added to dContainer)
-    stage.addChild(sky, dContainer, parcel, wall1, wall2, line, ocean, pauseText, dropZone, debugText);
-
-    //Add game objects to array
-    gameObjectsArr.push(wall1, wall2, dropZone,ocean);
-  
-    //add objects to moving array
-    movingArr.push(dContainer, parcel);
-    
-    stage.update();
-}
+ 
 //============================================================================//
 //                                  game gui                                  //
 //============================================================================//
 
-function buildGUI(){
+function buildGUI(){ //alert("buildGUI()");
     
     buildPauseMenu();
+
+    //diagnostic
+    //buildLine();
+    buildDebugText();
 }
 
-function buildPauseMenu() {
-    var pauseText = new createjs.Text("Game Paused!\nEsc to resume.\nSpace to restart", "60px Arial", "#f0e906");
+function buildPauseMenu() { //alert("buildPauseMenu()");
+    
+    pauseText = new createjs.Text("Game Paused!\n\nESC to resume.\nSPACEBAR to restart.", "40px Arial", "#f0e906");
     pauseText.x = stage.canvas.width/2;
     pauseText.y = stage.canvas.height/3.5;
     pauseText.textAlign = "center";
@@ -210,6 +184,23 @@ function buildPauseMenu() {
     pauseText.visible = false;
     
     stage.addChild(pauseText);
+}
+
+function buildLine(){ //for diagnostic purposes
+
+    var line = new createjs.Shape();
+    line.graphics.beginStroke("red").drawRect(0,0,268,107);
+    stage.addChild(line);
+}
+
+/* 
+ Function adds a Text display object to display object properties during game.
+ */
+function buildDebugText(){  //alert("buildDebugText()");//for diagnostic purposes
+    
+    debugText = new createjs.Text("", "15px Arial", "red");
+    debugText.x = debugText.y = 10;
+    stage.addChild(debugText);
 }
 
 
@@ -239,25 +230,30 @@ function buildWall(x,y,w,h, color){ //alert("buildWall()");
     wall.onCollision = neutralResponse;
     wall.graphics.beginFill(color).drawRect(0,0,wall.width, wall.height);
     
-    //set bounds
+    //set bounds for collision detection
     wall.setBounds(wall.x, wall.y, wall.width, wall.height);
     stage.addChild(wall);
+    gameObjectsArr.push(wall);  //add to collidable objects
 }
 
-function buildDropZone(wall){
-    var dz = new createjs.Graphics();
-    dz.beginStroke("#0204FA").beginFill("#2FC4FA").drawRect(0,0,50,50);
-
-    dropZone = new createjs.Shape(dz);
-
-    dropZone.alpha = 0.3;
-
-    dropZone.x = wall.x + (wall.width / 2) - 25;
-    dropZone.y = wall.y - 51 ;
+function buildDropZone2(x,y,w,h,color){
+    
+    //rectangular zone
+    dropZone = new createjs.Shape();
+    dropZone.x = x;
+    dropZone.y = y;
+    dropZone.width = w;
+    dropZone.height = h;
     dropZone.name = "dropZone";
     dropZone.onCollision = dropZoneResponse;
-    dropZone.setBounds(dropZone.x, dropZone.y, 50, 50);
-
+    dropZone.setBounds(dropZone.x, dropZone.y, dropZone.width, dropZone.height);
+    dropZone.graphics.beginStroke("black").beginFill(color).drawRect(0,0,dropZone.width, dropZone.height);
+    dropZone.alpha = 0.3;
+    stage.addChild(dropZone);
+    gameObjectsArr.push(dropZone);  //add to collidable objects
+    
+    //text in zone
+ 
 }
 
 function buildDrone() { //alert("buildDrone()");
@@ -329,14 +325,7 @@ function buildContainer() { //alert("buildContainer()");
     dContainer.setBounds(dContainer.x, dContainer.y, dContainer.width, dContainer.height);
     
     stage.addChild(dContainer);
-}
-
-function buildLine(){ //??temp function for diagnosis purposes, TO BE DELETED
-    var l = new createjs.Graphics();
-    l.beginStroke("red").drawRect(0,0,268,107);
-    l.beginStroke("red").drawRect(268,107,100,73);
-    var line = new createjs.Shape(l);
-    stage.addChild(line);
+    movingArr.push(dContainer);
 }
 
 function buildParcel(){ //alert("buildParcel());
@@ -363,11 +352,8 @@ function buildParcel(){ //alert("buildParcel());
     parcel.setBounds(parcel.x, parcel.y, parcel.width, parcel.height);
     
     stage.addChild(parcel);
+    movingArr.push(parcel);
 }
-
-
-
-
 
 function buildOcean(n, h, depth, a, b){
 
@@ -376,32 +362,30 @@ function buildOcean(n, h, depth, a, b){
     var bezierCommands = [];
     
     //create Shape
-    var ocean = new createjs.Shape();
+    ocean = new createjs.Shape();
     
     //properties
     ocean.x = 0;
     ocean.y = stage.canvas.height - (h + depth);
     ocean.graphics.beginFill("lightskyblue");
-    g_beginFill = ocean.graphics.command;
     ocean.graphics.drawRect(0,h,stage.canvas.width, 15);
     ocean.graphics.beginStroke("blue").beginFill("lightskyblue");
     ocean.onCollision = hazardResponse;
     
     ocean.setBounds(ocean.x, ocean.y+(h/2), stage.canvas.width, (h + depth));
     
-    
+    //construct the individual bezier curves
     for(i = 0; i < n; i++){
         
         ocean.graphics.moveTo(ocean.x+w*i,h);
         ocean.graphics.bezierCurveTo((w/2 + w*i),a,(w/2 + w*i),b,(w + w*i),h);
         bezierCommands.push(ocean.graphics.command);    //add each curve to array
-        
     }
     ocean.curves = bezierCommands;  //store in ocean object
-    //ocean.graphics.endFill();
-    //ocean.graphics.beginStroke("red");
-    //ocean.graphics.drawRect(ocean.x, 0 +(h/2), stage.canvas.width, (h + depth));
-    stage.addChild(ocean);
+    
+    
+    stage.addChild(ocean);      //add to stage
+    gameObjectsArr.push(ocean); //add to collidable objects
 }
 
 
@@ -417,9 +401,7 @@ function runGame(e){ //alert("runGame()");
     if(!e.paused){
         
         detectLanding(parcel);
-        //createjs.Tween.get(ocean).wait(1000).call(moveWaves).loop = true;
-        
-        
+
         for(i = 0; i < movingArr.length; i++){
             
             if(!movingArr[i].landed) {
@@ -797,9 +779,6 @@ function hazardResponse(){alert("hazardResponse()");
     //alert("hit hazard. must restart course.");
 }
 
-function powerpackResponse(){alert("powerpackResponse()");
-    
-}
 
 function dropZoneResponse() { //alert("dropZoneResponse()");
     //alert("carried: " + parcel.carried + "," + "landed: " + dContainer.landed)
@@ -1058,9 +1037,6 @@ function detectLanding(target){ //alert("detectLanding()");
         //alert(movingArr.indexOf(target));
         //alert(target.x +"," + target.y);
     }
-    
-    
-    
 }
 
 function updateChildrenBounds(container, cX, cY){
@@ -1075,10 +1051,7 @@ function updateChildrenBounds(container, cX, cY){
         
         //child bounds set to correspond to bounds relative to stage
         child.setBounds(container.x + xShift, container.y + yShift, child.width, child.height);
-        //alert(child.getBounds());
-        
     }
-    
 }
 
 
@@ -1122,6 +1095,7 @@ function moveWaves(e){
 
 
 /*
+ //deprecated
  function buildWalls(){ //alert("buildWalls()");
  
  //wall1
@@ -1161,9 +1135,59 @@ function moveWaves(e){
  */
 
 
+//deprecated
+/*
+ function buildDropZone(wall){
+ 
+ var dz = new createjs.Graphics();
+ dz.beginStroke("#0204FA").beginFill("#2FC4FA").drawRect(0,0,50,50);
+ 
+ dropZone = new createjs.Shape(dz);
+ 
+ dropZone.alpha = 0.3;
+ 
+ dropZone.x = wall.x + (wall.width / 2) - 25;
+ dropZone.y = wall.y - 51 ;
+ dropZone.name = "dropZone";
+ dropZone.onCollision = dropZoneResponse;
+ dropZone.setBounds(dropZone.x, dropZone.y, 50, 50);
+ 
+ }
+ */
 
 
-
+/*
+ //deprecated
+ function buildGameObjects(){//alert("buildgameObjectsArr()");
+ 
+ //build all objects
+ buildBackground();
+ buildDrone();           //drone before container for proper container bounds
+ buildContainer();
+ buildWalls();
+ buildParcel();
+ buildLine();
+ buildPauseMenu();
+ buildDropZone(wall2);
+ buildOcean(10,10,15,0,20);
+ 
+ // adding a Text display object to display properties during game
+ debugText = new createjs.Text("", "15px Arial", "black");
+ debugText.x =10;
+ debugText.y = 10;
+ 
+ //Add all objects to Stage except drone (drone was added to dContainer)
+ stage.addChild(sky, dContainer, parcel, wall1, wall2, line, ocean, pauseText, dropZone, debugText);
+ 
+ //Add game objects to array
+ gameObjectsArr.push(wall1, wall2, dropZone,ocean);
+ 
+ //add objects to moving array
+ movingArr.push(dContainer, parcel);
+ 
+ stage.update();
+ }
+ */
 
 
 
