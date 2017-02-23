@@ -68,7 +68,7 @@ var queue, stage;
 
 //game objects
 var dContainer, drone, parcel, ocean, dropZone;
-var pauseText, timerText, timer, startTime, pauseRect, startupText;
+var pauseText, timerText, timer, startTime, pauseRect, startupText, loadScreen;
 var droneHomeX, droneHomeY, parcelHomeX, parcelHomeY;//starting positions per course
 var waveAnimation; //reference to window interval for wave animation
 
@@ -83,6 +83,7 @@ var gameObjectsArr = [];   //contains all game objects not in dContainer
 var movingArr = [];        //contains all moving objects not in a container
 var aKeyDown = dKeyDown = escKeyDown = spacebarDown = false; //keyboard input flags
 var gameOver = courseOver = false;
+var currentCourse = 1;
 
 
 
@@ -105,35 +106,28 @@ function load() { //alert("load()");
 
 function init() { //alert("init()");
     
+    //build stage
     stage = new createjs.Stage("canvas");
     
-    startupSequence();
-    
-
-    //startGame();
-}
-
-function startupSequence(){ //alert("startupSequence()"
-    
+    //build loading screen
     var image = queue.getResult("startup");
-    
-    //create bitmap object of startup image
-    var startup = new createjs.Bitmap(image);
-    startup.x = startup.y = 0;
-    stage.addChild(startup);
-    stage.update();
+    loadScreen = new createjs.Bitmap(image);
+    loadScreen.x = loadScreen.y = 0;
+    stage.addChild(loadScreen);
     
     //fade it out
     createjs.Ticker.framerate = 60;
     createjs.Ticker.addEventListener("tick", function(e) { stage.update(); });
-    createjs.Tween.get(startup).wait(2000).to({alpha:0}, 2000).call(removeStartup);
+    createjs.Tween.get(loadScreen).wait(2000).to({alpha:0}, 2000).call(buildGame);
 }
 
-function removeStartup(){ //alert("removeStartup()");
+
+function buildGame(){ //alert("removeStartup()");
     
-    createjs.Ticker.removeAllEventListeners();  //restart runGame time
-    createjs.Ticker.reset();
-    buildCourse1();
+    stage.removeChild(loadScreen);
+    createjs.Ticker.removeAllEventListeners(); //remove anonymous function
+    createjs.Ticker.reset(); //restart runGame time
+    buildCourse(currentCourse);
     buildGUI(); //after building course, so that text appears over image
     
     
@@ -293,14 +287,8 @@ function setCourseOver(scenario){ //alert("courseOver()");
 }
 
 
-
-
-
-
-
-
 //============================================================================//
-//                                  game gui                                  //
+//                                  game GUI                                  //
 //============================================================================//
 
 function buildGUI(){ //alert("buildGUI()");
@@ -341,8 +329,8 @@ function buildPauseRect(w,h,color){ //alert("buildPauseRect()");
     stage.addChild(pauseRect);
 }
 
-function buildGameTimer(color){
-    //alert(startTime);
+function buildGameTimer(color){ //alert("buildGameTimer()");
+    
     var min, sec, message;
     
     //get formatted time
@@ -380,7 +368,7 @@ function updateTimer(t){ //alert("updateTimer()");
     
     //detect if timer runs out
     if(Math.floor(remaining) < 1){
-        //alert(remaining);
+        
         setCourseOver(0);
     }
 
@@ -406,7 +394,7 @@ function buildStartUpMessage(){ //alert("buildStartUpMessage()");
     
     var m2 = "GOAL:\nPickup and deliver the Package to the Drop Zone. Land in the\nDrop Zone while carrying the Package to finish the course.\n\nAvoid hazards like birds and water. You must beat the Timer too!\n\n";
     
-    var m3 = "CONTROLS:\nMouse Button Down: fly upward\nLeft Arrow Key: move left\nRight Arrow Key: move right\n\n";
+    var m3 = "CONTROLS:\nClick and Hold the Right Mouse button: fly upward\nA Key: move left\nD Key: move right\n\n";
     
     var m4 = "You cannot move while landed. Press ESC to pause the game.\n\n";
     
@@ -425,6 +413,16 @@ function buildStartUpMessage(){ //alert("buildStartUpMessage()");
 //============================================================================//
 //                                    courses                                 //
 //============================================================================//
+
+function buildCourse(number){
+    
+    switch(number){
+        case 1:
+            buildCourse1();
+            break;
+    }
+}
+
 
 function buildCourse1(){ //alert("buildCourse1()");
     
