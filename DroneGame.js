@@ -404,11 +404,11 @@ function buildStartUpMessage(){ //alert("buildStartUpMessage()");
     
     var m1 = "                             Welcome to Drone Delivery!\n\n";
     
-    var m2 = "GOAL:\nPickup and deliver the Package to the Drop Zone. Land in the\nDrop Zone while carrying the Package.\n\nAvoid hazards like birds and water. You must beat the Timer too!\n\n";
+    var m2 = "GOAL:\nPickup and deliver the Package to the Drop Zone. Land in the\nDrop Zone while carrying the Package to finish the course.\n\nAvoid hazards like birds and water. You must beat the Timer too!\n\n";
     
     var m3 = "CONTROLS:\nMouse Button Down: fly upward\nLeft Arrow Key: move left\nRight Arrow Key: move right\n\n";
     
-    var m4 = "You cannot move while landed. Press ESC to Pause the Game.\n\n";
+    var m4 = "You cannot move while landed. Press ESC to pause the game.\n\n";
     
     var m5 = "                  - press SPACEBAR to start the game -";
     
