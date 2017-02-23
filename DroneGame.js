@@ -31,6 +31,7 @@
  - Overview
  - Variables
  - Startup Functions
+ - Game Input
  - Game mechanics
  - Game GUI
  - Courses
@@ -39,6 +40,7 @@
  - game actions
  - movable object update / rendering
  - animation
+ - debugging
  
  
  **Bug 3.01 If land on surface while carrying package, then let go of package, then grab again, sometimes the package sinks below the surface, and when you grab it again, it got the values -30,-33. Has something to with the shiftX, shiftY in Step 2 B of the updatePosition() method. For now, I mitigated it by only choosing to update to point values that are greater than or equal to zero.
@@ -55,7 +57,8 @@ const A_KEY = 65;
 const D_KEY = 68;
 const ESC_KEY = 27;
 const SPACEBAR = 32;
-const COURSE_1_TIME = 1000*60*2.5;    //2 min
+const COURSE_1_TIME = 1000*60*3;    //3 min
+const WAVE_INT = 1000;
 
 //diagnostic
 var debugText;
@@ -65,11 +68,9 @@ var queue, stage;
 
 //game objects
 var dContainer, drone, parcel, ocean, dropZone;
-var pauseText, timerText, min, sec;
-var waveInterval; //reference to window interval for wave animation
-
-//starting positions per course
-var droneHomeX, droneHomeY, parcelHomeX, parcelHomeY;
+var pauseText, timerText, timer, startTime;
+var droneHomeX, droneHomeY, parcelHomeX, parcelHomeY;//starting positions per course
+var waveAnimation; //reference to window interval for wave animation
 
 //drone customization
 var d_beginFillBody;
@@ -82,6 +83,7 @@ var gameObjectsArr = [];   //contains all game objects not in dContainer
 var movingArr = [];        //contains all moving objects not in a container
 var aKeyDown = dKeyDown = escKeyDown = spacebarDown = false; //keyboard input flags
 var gameOver = courseOver = false;
+
 
 
 
@@ -121,51 +123,16 @@ function startGame(){ //alert("startGame()");
     window.onmouseup = moveDown;
     
     //animation
-    waveInterval = window.setInterval(moveWaves, 1000);
+    waveAnimation = window.setInterval(moveWaves, WAVE_INT);
 }
+
+
 
 
 
 //============================================================================//
-//                              game mechanics                                //
+//                                game input                                  //
 //============================================================================//
-
-function runGame(e){ //alert("runGame()");
-    var i;
-    
-    if(!e.paused){
-        
-        detectLanding(parcel);
-        
-        for(i = 0; i < movingArr.length; i++){
-            
-            if(!movingArr[i].landed) {
-                updatePosition(movingArr[i]);
-                renderPosition(movingArr[i]);
-                //alert(movingArr[i]);
-            }
-        }
-        
-        debugText.text = "Dropzone intersects dContainer?: " + dropZone.getBounds().intersects(dContainer.getBounds()) + "\t Carried: " + parcel.carried + "\t Landed: " + dContainer.landed;
-        
-        updateTimer(e.runTime, "white");
-        //alert(e.runTime);
-        stage.update();
-    }
-}
-
-
-function pauseGame(e) { //alert("pauseGame()");
-    createjs.Ticker.paused = !createjs.Ticker.paused;
-    pauseText.visible = !pauseText.visible;
-    stage.update();
-    
-    if(createjs.Ticker.paused){
-        window.clearInterval(waveInterval); //remove interval from window
-    } else{
-        waveInterval = window.setInterval(moveWaves, 1000); //add interval to window
-    }
-}
 
 function detectKey(e){ //alert("detectKey()");
     e = !e ? window.event : e; //if event is not event, get window.event;
@@ -222,6 +189,74 @@ function moveDown(e){ //alert("moveDown()");
 
 
 
+
+//============================================================================//
+//                              game mechanics                                //
+//============================================================================//
+
+function runGame(e){ //alert("runGame()");
+    
+    var i;
+    
+    if(!e.paused){
+        
+        updateTimer(e.runTime);
+        detectLanding(parcel);
+        
+        for(i = 0; i < movingArr.length; i++){ //process all moving objects
+            
+            if(!movingArr[i].landed) {
+                updatePosition(movingArr[i]);
+                renderPosition(movingArr[i]);
+            }
+        }
+        
+        updateDebugText();
+        stage.update();
+    }
+}
+
+
+function pauseGame(e) { //alert("pauseGame()");
+    
+    createjs.Ticker.paused = !createjs.Ticker.paused;
+    pauseText.visible = !pauseText.visible;
+    
+    if(createjs.Ticker.paused){
+        window.clearInterval(waveAnimation); //remove interval from window
+    }
+    else{
+        //add interval to window
+        waveAnimation = window.setInterval(moveWaves, WAVE_INT);
+    }
+    
+    stage.update();
+}
+
+
+function setCourseOver(scenario){ //alert("courseOver()");
+    
+    courseOver = true;
+    createjs.Ticker.paused = true;
+    pauseText.visible = true;
+    
+    switch(scenario){
+        case 0:
+            pauseText.text = "You Lose!\n\nSPACEBAR to restart.";
+            break;
+        case 1:
+            pauseText.text = "You Win!\n\nSPACEBAR to restart.";
+            break;
+    }
+}
+
+
+
+
+
+
+
+
 //============================================================================//
 //                                  game gui                                  //
 //============================================================================//
@@ -238,7 +273,9 @@ function buildGUI(){ //alert("buildGUI()");
 
 function buildPauseMenu(color) { //alert("buildPauseMenu()");
     
-    pauseText = new createjs.Text("Game Paused!\n\nESC to resume.\nSPACEBAR to restart.", "40px Arial", color);
+    var message = "Game Paused!\n\nESC to resume.\nSPACEBAR to restart.";
+    
+    pauseText = new createjs.Text(message, "40px Arial", color);
     pauseText.x = stage.canvas.width/2;
     pauseText.y = stage.canvas.height/3.5;
     pauseText.textAlign = "center";
@@ -249,43 +286,62 @@ function buildPauseMenu(color) { //alert("buildPauseMenu()");
 }
 
 function buildGameTimer(color){
+    //alert(startTime);
+    var min, sec, message;
     
-    convertTime(COURSE_1_TIME);
-    timerText = new createjs.Text("Time Remaining: " + min + ":" + sec, "30px Arial", color);
-    timerText.x = stage.canvas.width - 325;
+    //get formatted time
+    timer = convertTime(startTime); //starting time
+    min = timer.min;
+    sec = timer.sec < 10 ? "0" + timer.sec : timer.sec;
+
+    //set as text
+    message = "Time Remaining: " + min + ":" + sec;
+    timerText = new createjs.Text(message, "30px Arial", color);
+    timerText.x = stage.canvas.width - 350;
     timerText.y = 10;
+    
     stage.addChild(timerText);
-}
-
-function buildLine(){ //for diagnostic purposes
-    
-    var line = new createjs.Shape();
-    line.graphics.beginStroke("red").drawRect(0,0,268,107);
-    stage.addChild(line);
-}
-
-/*
- Function adds a Text display object to display object properties during game.
- */
-function buildDebugText(){  //alert("buildDebugText()");//for diagnostic purposes
-    
-    debugText = new createjs.Text("", "15px Arial", "red");
-    debugText.x = 10;
-    debugText.y = 550;
-    stage.addChild(debugText);
 }
 
 function convertTime(ms){ //alert("convertTime()");
     
+    var totalSec, m, s, time;
+    
     //convert course time in milliseconds into minutes and seconds
-    var totalSec = Math.floor(ms/1000);
-    min = Math.floor(totalSec / 60);    //whole minutes
-    sec = (totalSec % 60);              //extra seconds
+    totalSec = ms/1000;
+    m = parseInt(totalSec / 60);    //whole minutes
+    s = parseInt(totalSec % 60);    //round additional seconds to integer value
+    
+    return {min:m, sec:s};  //return object with min and sec properties
 }
 
-function updateTimer(t, color){ //alert("updateTimer()");
-    convertTime(t);
+function updateTimer(t){ //alert("updateTimer()");
+    
+    var min, sec, remaining;
+    
+    //get time remaining
+    remaining = startTime - t;
+    
+    //detect if timer runs out
+    if(Math.floor(remaining) < 1){
+        //alert(remaining);
+        setCourseOver(0);
+    }
+
+    //update timer object
+    timer = convertTime(remaining);
+    min = timer.min;
+    sec = timer.sec < 10 ? "0" + timer.sec : timer.sec;
+    
+    //update text field
     timerText.text = "Time Remaining: " + min + ":" + sec;
+    
+    //change color if necessary
+    if(timer.min < 1 && timer.sec < 10)
+    {
+        timerText.color = "red";
+        
+    }
 }
 
 
@@ -321,6 +377,8 @@ function buildCourse1(){ //alert("buildCourse1()");
     buildDrone();
     buildContainer();   //drone before container for proper container bounds
     buildParcel();
+    
+    startTime = COURSE_1_TIME;  //set start time//starting positions per course
     
     stage.update();
 }
@@ -366,6 +424,8 @@ function buildWall(x,y,w,h, color){ //alert("buildWall()");
 
 function buildDropZone2(x,y,w,h,color){
     
+    var zoneText;
+    
     //rectangular zone
     dropZone = new createjs.Shape();
     dropZone.x = x;
@@ -381,6 +441,12 @@ function buildDropZone2(x,y,w,h,color){
     gameObjectsArr.push(dropZone);  //add to collidable objects
     
     //text in zone
+    zoneText = new createjs.Text("DROP\nZONE", "40px Arial", "white");
+    zoneText.textAlign = "center";
+    zoneText.x = dropZone.x + dropZone.width/2;
+    zoneText.y = dropZone.y + dropZone.height/4;
+    zoneText.alpha = dropZone.alpha*2;
+    stage.addChild(zoneText);
  
 }
 
@@ -807,18 +873,17 @@ function neutralResponse(){ //alert("neutralResponse()");
     //nothing occurs on purpose
 }
 
-function hazardResponse(){alert("hazardResponse()");
-    //alert("hit hazard. must restart course.");
+function hazardResponse(){//alert("hazardResponse()");
+    
+    setCourseOver(0);
 }
 
 
 function dropZoneResponse() { //alert("dropZoneResponse()");
-    //alert("carried: " + parcel.carried + "," + "landed: " + dContainer.landed)
 
     if(parcel.carried && dContainer.landed) {
-        alert("You Win!");
+        setCourseOver(1);
     }
-
 }
 
 
@@ -1123,6 +1188,33 @@ function moveWaves(e){
         }
 }
 
+//============================================================================//
+//                                  debugging                                 //
+//============================================================================//
+
+//debugging
+function buildLine(){ //for diagnostic purposes
+    
+    var line = new createjs.Shape();
+    line.graphics.beginStroke("red").drawRect(0,0,268,107);
+    stage.addChild(line);
+}
+
+/*
+ Function adds a Text display object to display object properties during game.
+ */
+function buildDebugText(){  //alert("buildDebugText()");//for diagnostic purposes
+    
+    debugText = new createjs.Text("", "15px Arial", "red");
+    debugText.x = 10;
+    debugText.y = 550;
+    stage.addChild(debugText);
+}
+
+function updateDebugText(){
+    
+    debugText.text  = "Dropzone intersects dContainer?: " + dropZone.getBounds().intersects(dContainer.getBounds()) + "\t Carried: " + parcel.carried + "\t Landed: " + dContainer.landed;
+}
 
 
 
