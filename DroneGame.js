@@ -125,8 +125,7 @@ function init() { //alert("init()");
 function buildGame(){ //alert("removeStartup()");
     
     stage.removeChild(loadScreen);
-    createjs.Ticker.removeAllEventListeners(); //remove anonymous function
-    createjs.Ticker.reset(); //restart runGame time
+    createjs.Ticker.reset(); //remove all event listeners and restart runGame time
     buildCourse(currentCourse);
     buildGUI(); //after building course, so that text appears over image
     
