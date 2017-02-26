@@ -15,6 +15,7 @@
  - speed
  - width
  - up
+ - xPropeller
  
  It is possible to set a function as a property of an object. Certain objects have
  the property "onCollision". The idea is that if an object is collided into, we call 
@@ -58,7 +59,8 @@ const D_KEY = 68;
 const ESC_KEY = 27;
 const SPACEBAR = 32;
 const COURSE_1_TIME = 1000*60*3;    //3 min
-const WAVE_INT = 1000;
+const WAVE_INT = 1000;  //length in ms of the interval for wave movement
+const PROP_WIDTH = 30;  //width of a propeller
 
 //diagnostic
 var debugText;
@@ -74,9 +76,7 @@ var waveAnimation; //reference to window interval for wave animation
 
 //drone customization
 var d_beginFillBody;
-var d_beginFillPropellerL; //left side of propeller
-var d_beginFillPropellerR; //right side of propeller
-
+var d_drawRectPropellerL, d_drawRectPropellerR;
 
 //variables with values
 var gameObjectsArr = [];   //contains all game objects not in dContainer
@@ -237,6 +237,7 @@ function runGame(e){ //alert("runGame()");
         
         updateTimer(e.runTime);
         detectLanding(parcel);
+        movePropellers();
         
         for(i = 0; i < movingArr.length; i++){ //process all moving objects
             
@@ -526,15 +527,25 @@ function buildDrone() { //alert("buildDrone()");
     //create graphics object
     var d = new createjs.Graphics();
     
-    //propellers
+    //propellers old version
+    //d.beginFill("lightgrey");
+    //d_beginFillPropellerL = d.command; //store for later
+    //d.drawRect(0,0,15,4);   //left side of left propeller
+    //d.drawRect(70,0,15,4);  //left side of right propeller
+    //d.beginFill("grey");
+    //d_beginFillPropellerR = d.command;
+    //d.drawRect(15,0,15,4);  //right side of left propeller
+    //d.drawRect(85,0,15,4);  //right side of right propeller
+    
+    //propellers version 2
     d.beginFill("lightgrey");
-    d_beginFillPropellerL = d.command; //store for later
-    d.drawRect(0,0,15,4);   //left side of left propeller
-    d.drawRect(70,0,15,4);  //left side of right propeller
-    d.beginFill("grey");
-    d_beginFillPropellerR = d.command;
-    d.drawRect(15,0,15,4);  //right side of left propeller
-    d.drawRect(85,0,15,4);  //right side of right propeller
+    d.drawRect(0,0,PROP_WIDTH,4);
+    d.drawRect(70,0,PROP_WIDTH,4);
+    d.beginFill("#adadad");
+    d.drawRect(20,0,5,4);
+    d_drawRectPropellerL = d.command;
+    d.drawRect(90,0,5,4);
+    d_drawRectPropellerR = d.command;
     
     //shafts
     d.beginFill("white").beginStroke("grey");
@@ -564,6 +575,7 @@ function buildDrone() { //alert("buildDrone()");
     drone.up = false;       //whether drone is flying upward
     drone.name = "drone";
     drone.landed = false;   //whether drone has landed on a surface
+    drone.xPropeller = 20;  //starting x position of gray box on each propeller
     
     //set bounds
     drone.setBounds(drone.x,drone.y,drone.width,drone.height);
@@ -1178,10 +1190,12 @@ function renderPosition(target){
         updateChildrenBounds(target, target.x, target.y);
     }
     
-    
+    /*
+     //unnecessary
     if( target.isContainer && drone.up){
-        movePropellers();
+        movePropellers2();
     }
+     */
 }
 
 
@@ -1228,16 +1242,19 @@ function updateChildrenBounds(container, cX, cY){
 //============================================================================//
 
 //drone animation
-function movePropellers(){ //alert("movePropellers()");
+function movePropellers(){//alert("movePropellers2()");
     
-    if(d_beginFillPropellerR.style === "lightgrey") {
-        d_beginFillPropellerR.style = "grey";
-        d_beginFillPropellerL.style = "lightgrey";
+    //change position of grey box, don't let go off of propeller
+    //find next position based on whether drone is flying upward or not
+    drone.xPropeller = drone.up ? drone.xPropeller - 7 : drone.xPropeller - 2;
+    
+    if(drone.xPropeller < 0){ //goes off left side of each propellor
+    
+        drone.xPropeller = PROP_WIDTH - 5;   //reset
     }
-    else {
-        d_beginFillPropellerR.style = "lightgrey";
-        d_beginFillPropellerL.style = "grey";
-    }
+    d_drawRectPropellerL.x = drone.xPropeller;
+    d_drawRectPropellerR.x = (70 + drone.xPropeller);
+    
 }
 
 
@@ -1288,101 +1305,26 @@ function updateDebugText(){
 }
 
 
-
 /*
- //deprecated
- function buildWalls(){ //alert("buildWalls()");
+ //Deprecated
+ //old method of animating propellers
+ var d_beginFillPropellerL; //left side of propeller
+ var d_beginFillPropellerR; //right side of propeller
  
- //wall1
- //create graphics object
- var w = new createjs.Graphics();
- w.beginFill("black").drawRect(0,0,10,250);
+ function movePropellers(){ //alert("movePropellers()");
  
- 
- 
- //create shape object
- wall1 = new createjs.Shape(w);
- wall1.x = stage.canvas.width/2;
- wall1.y = 180;
- wall1.width = 10;
- wall1.height = 250;
- wall1.name = "wall1";
- wall1.onCollision = neutralResponse;
- 
- //set bounds
- wall1.setBounds(wall1.x, wall1.y, wall1.width, wall1.height);
- 
- //wall 2
- var w2 = new createjs.Graphics();
- w2.beginFill("black").drawRect(0,0,300,10);
- 
- wall2 = new createjs.Shape(w2);
- wall2.x = wall1.x+10;
- wall2.y = 250;
- wall2.width = 300;
- wall2.height = 10;
- wall2.name = "wall2";
- wall2.onCollision = neutralResponse; //method to call in case of collision
- 
- //set bounds
- wall2.setBounds(wall2.x, wall2.y, wall2.width, wall2.height);
+     if(d_beginFillPropellerR.style === "lightgrey") {
+     d_beginFillPropellerR.style = "grey";
+     d_beginFillPropellerL.style = "lightgrey";
+     }
+     else {
+     d_beginFillPropellerR.style = "lightgrey";
+     d_beginFillPropellerL.style = "grey";
+     }
  }
+ 
  */
 
-
-//deprecated
-/*
- function buildDropZone(wall){
- 
- var dz = new createjs.Graphics();
- dz.beginStroke("#0204FA").beginFill("#2FC4FA").drawRect(0,0,50,50);
- 
- dropZone = new createjs.Shape(dz);
- 
- dropZone.alpha = 0.3;
- 
- dropZone.x = wall.x + (wall.width / 2) - 25;
- dropZone.y = wall.y - 51 ;
- dropZone.name = "dropZone";
- dropZone.onCollision = dropZoneResponse;
- dropZone.setBounds(dropZone.x, dropZone.y, 50, 50);
- 
- }
- */
-
-
-/*
- //deprecated
- function buildGameObjects(){//alert("buildgameObjectsArr()");
- 
- //build all objects
- buildBackground();
- buildDrone();           //drone before container for proper container bounds
- buildContainer();
- buildWalls();
- buildParcel();
- buildLine();
- buildPauseMenu();
- buildDropZone(wall2);
- buildOcean(10,10,15,0,20);
- 
- // adding a Text display object to display properties during game
- debugText = new createjs.Text("", "15px Arial", "black");
- debugText.x =10;
- debugText.y = 10;
- 
- //Add all objects to Stage except drone (drone was added to dContainer)
- stage.addChild(sky, dContainer, parcel, wall1, wall2, line, ocean, pauseText, dropZone, debugText);
- 
- //Add game objects to array
- gameObjectsArr.push(wall1, wall2, dropZone,ocean);
- 
- //add objects to moving array
- movingArr.push(dContainer, parcel);
- 
- stage.update();
- }
- */
 
 
 
