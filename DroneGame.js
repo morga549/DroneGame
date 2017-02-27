@@ -175,7 +175,7 @@ function startGame(e){ //alert("startGame()");
     }
 }
 
-function restartGame(e){
+function restartGame(e){ //alert("restartGame()");
     //remove event listeners from window
     window.removeEventListener("keydown", detectKey);
     window.removeEventListener("keyup", removeKey);
@@ -207,7 +207,7 @@ function detectKey(e){ //alert("detectKey()");
             break;
         case SPACEBAR:
             if(createjs.Ticker.paused){
-                //alert("restart game");
+                alert("restart game");
                 restartGame();
             }
             else if (!parcel.carried){
