@@ -1,11 +1,11 @@
 # Drone Delivery
-NDSU Spring 2017 | CSCI 313 Project
+NDSU Spring 2017 | CSCI 313 Project | Last Updated: 27 Feb 2017
 
 Drone Delivery is a platform-style JavaScript web-browser game. It is built inside a DOM Canvas object in HTML and utilizes the createjs library.
 
 ##1. OBJECTIVE
 
-Players must pick up and deliver The Package to the Drop Zone of each course before time runs out on the Game Timer, while avoiding all hazards.
+Players must pick up and deliver The Parcel to the Drop Zone of each course before time runs out on the Game Timer, while avoiding all hazards.
 
 
 ##2. GAME OBJECTS
@@ -18,7 +18,7 @@ Players must pick up and deliver The Package to the Drop Zone of each course bef
 ####Neutral objects
 -  Walls
 -  Platforms
--  Pickup Objects (i.e. The Package)
+-  Pickup Objects (i.e. The Parcel)
 
 ####Positives
 -  Drop Zone
@@ -29,21 +29,21 @@ Players must pick up and deliver The Package to the Drop Zone of each course bef
 -  The Game Timer countdown begins when the player presses SPACEBAR at the beginning
 of the course
 
-###Drone and Package Destruction Rules
--  The Drone and The Package are destroyed if they collide with a hazard
--  The Drone and The Package are not destroyed if they collide with a neutral object
--  The Drone and The Package are not destroyed if they collide with the canvas edge
+###Drone and Parcel Collision Rules
+-  The Drone and The Parcel are destroyed if they collide with a hazard
+-  The Drone and The Parcel are not destroyed if they collide with a neutral object
+-  The Drone and The Parcel are not destroyed if they collide with the canvas edge
 
 ###Game Ending Rules
--  If the Drone lands in the Drop Zone while carrying The Package before the Game
+-  If the Drone lands in the Drop Zone while carrying The Parcel before the Game
 Timer runs out, the course is won
--  If either the Drone or The Package are destroyed, player loses the course
+-  If either the Drone or The Parcel are destroyed, player loses the course
 -  If the Game Timer reaches 0:00 before delivery, player loses the course
 
 ###Movement Rules
--  No game objects (including the Drone and The Package) can go outside the canvas
--  The Drone and pickup objects (i.e The Package) cannot pass through a neutral object
--  All pickup objects (i.e The Package) fall downward if dropped in the air
+-  No game objects (including the Drone and The Parcel) can go outside the canvas
+-  The Drone and pickup objects (i.e The Parcel) cannot pass through a neutral object
+-  All pickup objects (i.e The Parcel) fall downward if dropped in the air
 -  All pickup objects bounce horizontally off neutral objects and the canvas edges
 
 
@@ -51,45 +51,42 @@ Timer runs out, the course is won
 ###Drone
 Players control a Drone using the keyboard and mouse.
 
-A-KEY:      if the Drone is not landed, move Drone left
-
-D-KEY:      if the Drone is not landed, move Drone right
-
-LEFT MOUSE: click and hold to make the Drone fly upward
+-  A-KEY:      if the Drone is not landed, move Drone left
+-  D-KEY:      if the Drone is not landed, move Drone right
+-  LEFT MOUSE: click and hold to make the Drone fly upward
 
 
 ###Pickup / Drop
-Players control interaction between the Drone and The Package through the keyboard.
+Players control interaction between the Drone and The Parcel through the keyboard.
 
-SPACEBAR:   if the Drone has landed with its grabber (black area) on The Package,
-pick up The Package. If the Drone is carrying The Package, drop The
-Package.
+-  SPACEBAR:   if the Drone has landed with its grabber (black area) on The Parcel,
+pick up The Parcel. If the Drone is carrying The Parcel, drop The
+Parcel.
 
 
 ###Game Mechanics
 Players control game mechanics through the keyboard.
 
-ESC:        pauses the game
-SPACEBAR:   if the game is showing the Gameplay Explanation, start the game
-if the game is paused, causes the game to restart
+-  ESC:        pauses the game
+-  SPACEBAR:   if the game is showing the Gameplay Explanation, start the game; if the game is paused, causes the game to restart
 
 
 ##5. GAME DESIGN
-###5.1 Basic Game Design
+###5.1 GAME DESIGN (BASIC)
 The game is composed of objects, variables, and functions.
 
-####5.1.1. Objects
+####5.1.1. OBJECTS
 Objects are composed of standard classes of the createjs library.
 
 -  createjs.Ticker
 -  stage       (Stage)
 -  dContainer  (Container)
 -  sky         (Bitmap)        (i.e. background image)
--  birds       (Sprite)
--  text        (Text)          (multiple)
+-  birds       (Sprite)        (each course includes multiple birds)
+-  text        (Text)          (game includes multiple Text objects)
 -  drone       (Shape)
 -  ocean       (Shape)
--  walls       (Shape)         (multiple)
+-  walls       (Shape)         (each course includes multiple walls)
 -  dropZone    (Shape)
 
 
@@ -101,7 +98,7 @@ event occurs 60 times per second. Game mechanics are based on this "tick" event.
 #####About dContainer:
 dContainer is a container that can contain children. At game start, dContainer contains 
 the Drone. The Drone cannot be removed from dContainer. If the Drone "picks up" a 
-pickup object (i.e. The Package), that object is also added to dContainer. If the Drone
+pickup object (i.e. The Parcel), that object is also added to dContainer. If the Drone
 "drops" an object it was carrying, that object is removed from dContainer.
 
 Keyboard and mouse interactions move dContainer. Moving dContainer moves all of its
@@ -109,10 +106,10 @@ children as well.
 
 
 
-####5.1.2. Variables
+####5.1.2. VARIABLES
 -  gameObjectsArr  (array containing all objects the Drone can interact with)
 -  movingArr       (array containing all objects that user can interact with that are
-currently moving through the air (i.e. Drone, The Package, etc.))
+currently moving through the air (i.e. Drone, The Parcel, etc.))
 
 #####How Variables Are Used
 -  Once the game has started, the game loops through all objects in movingArr, updating
@@ -121,15 +118,15 @@ and rendering their positions.
 all objects in the gameObjectsArr.
 
 #####Variable Rules:
--  If The Package or a similar pickup object are picked up, it is removed from the
+-  If The Parcel or a similar pickup object are picked up, it is removed from the
 gameObjectsArr.
--  If The Package or a similar pickup object are dropped, it is added to the movingArr.
--  If The Package or a similar pickup object land on a horizontal neutral surface, it
+-  If The Parcel or a similar pickup object are dropped, it is added to the movingArr.
+-  If The Parcel or a similar pickup object land on a horizontal neutral surface, it
 is removed from the movingArr and added to the gameObjectsArr.
 
 
 
-####5.1.3. functions
+####5.1.3. FUNCTIONS
 Each function will be described in detail in the implementation section.
 Drone Delivery contains the following functions:
 
@@ -204,28 +201,26 @@ Drone Delivery contains the following functions:
 -  moveWaves(e)
 
 
-
-
-
-###5.2 Advanced Game Design
+###5.2 GAME DESIGN (ADVANCED)
 
 ####Dynamically Injected Properties
-JavaScript suppports dynamically injected properties. Drone Delivery utilizes this 
-feature extensively to store object data. Dynamically injected properties in Drone Delivery include:
+JavaScript suppports dynamically injected properties for objects. Drone Delivery utilizes this feature extensively to store object data. Dynamically injected properties in Drone Delivery include:
 
-- carried
-- direction
-- height
-- isContainer
-- landed
-- nextX
-- nextY
-- onCollision
-- speedX
-- speedY
-- width
-- up
-- xPropeller
+-  carried
+    +  used to flag whether the parcel is being carried by the Drone
+-  direction
+    +  used to indicate whether movable object is moving right or left or neither
+-  height
+-  isContainer
+-  landed
+-  nextX
+-  nextY
+-  onCollision
+-  speedX
+-  speedY
+-  width
+-  up
+-  xPropeller
 
 It is possible to set a function as a property of an object. Certain objects have
 the property "onCollision". The idea is that if an object is collided into, we call 
@@ -242,7 +237,7 @@ a moving object, the hazardResponse() method will be called, which ends the cour
 ##6. Bugs
 
 ###Bug 3.01 
-If Drone lands on surface while carrying package, then lets go of package, then grabs again, sometimes the package sinks below the surface, and when you grab it again, dContainer is getting the call to move to position -30,-33. Has something to with the shiftX, shiftY in Step 2 B of the updatePosition() method. For now, I mitigated it by only choosing to update to point values that are greater than or equal to zero.
+If Drone lands on surface while carrying Parcel, then lets go of Parcel, then grabs again, sometimes the Parcel sinks below the surface, and when you grab it again, dContainer is getting the call to move to position -30,-33. Has something to with the shiftX, shiftY in Step 2 B of the updatePosition() method. For now, I mitigated it by only choosing to update to point values that are greater than or equal to zero.
 
 
 
