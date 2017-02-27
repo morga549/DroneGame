@@ -177,7 +177,11 @@ function startGame(e){ //alert("startGame()");
 
 function restartGame(e){ //alert("restartGame()");
     //clear the stage
-    //stage.clear();    //??bug, creates issues
+    stage.clear();
+    
+    //clear game arrays
+    gameObjectsArr = [];
+    movingArr = [];
     
     //remove event listeners from window
     window.removeEventListener("keydown", detectKey);
