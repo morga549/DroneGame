@@ -12,7 +12,8 @@
  - nextX
  - nextY
  - onCollision
- - speed
+ - speedX
+ - speedY
  - width
  - up
  - xPropeller
@@ -61,6 +62,7 @@ const SPACEBAR = 32;
 const COURSE_1_TIME = 1000*60*3;    //3 min
 const WAVE_INT = 1000;  //length in ms of the interval for wave movement
 const PROP_WIDTH = 30;  //width of a propeller
+const UP_SPEED = 1;
 
 //diagnostic
 var debugText;
@@ -243,6 +245,7 @@ function moveUp(e){ //alert("moveUp()");
     
     drone.up = true;
     drone.landed = dContainer.landed = false;
+    dContainer.speedY = UP_SPEED;
     
     if(parcel.carried) {
         parcel.landed = false;
@@ -252,6 +255,7 @@ function moveUp(e){ //alert("moveUp()");
 function moveDown(e){ //alert("moveDown()");
     
     drone.up = false;
+    dContainer.speedY = dContainer.speedY*2;
 }
 
 
@@ -634,7 +638,7 @@ function buildContainer() { //alert("buildContainer()");
     dContainer = new createjs.Container();
     dContainer.x = dContainer.nextX = droneHomeX;
     dContainer.y = dContainer.nextY = (droneHomeY - drone.height);
-    dContainer.speed = 1;
+    dContainer.speedX = dContainer.speedY = UP_SPEED;
     dContainer.direction = 0; //1 = moving right, -1 = moving left, 0 = straight down
     dContainer.width = drone.width; //match the dimensions of the drone
     dContainer.height = drone.height;
@@ -662,7 +666,8 @@ function buildParcel(){ //alert("buildParcel());
     parcel.name = "parcel";
     parcel.landed = false;     //whether the parcel is on a platform
     parcel.direction = 0; //1 = moving right, -1 = moving left, 0 = straight down
-    parcel.speed = 2;
+    parcel.speedX = 2;
+    parcel.speedY = 2;
     parcel.onCollision = neutralResponse; //method to call in case of collision
     parcel.isContainer = false;
     parcel.carried = false;
@@ -964,6 +969,8 @@ function pickup(target){ //alert("pickup()");
 
 function drop(target){ //alert("drop()");
     
+    var cBounds;
+    
     //parcel x,y is relative to dContainer and must be readjusted to stage
     var shiftX = (dContainer.width - target.width) /2;
     var shiftY = drone.height;
@@ -971,7 +978,8 @@ function drop(target){ //alert("drop()");
     
     //update properties
     target.direction = dContainer.direction;
-    target.speed = dContainer.speed + 2;
+    target.speedY = dContainer.speedY*2;
+    target.speedX = dContainer.speedX;
     target.carried = false;
     target.landed = false;
     
@@ -996,7 +1004,10 @@ function drop(target){ //alert("drop()");
     
     //update dContainer properties
     dContainer.height -= target.height; //no longer carrying the parcel
-    dContainer.getBounds().height -= target.height; //update height bounds as well
+    
+    //update dContainer bounds
+    cBounds = dContainer.getBounds();
+    dContainer.setBounds(cBounds.x, cBounds.y, cBounds.width, dContainer.height);
 }
 
 function neutralResponse(){ //alert("neutralResponse()");
@@ -1037,20 +1048,20 @@ function calcNextPosition(target){
         //horizontal
         if(aKeyDown){
             target.direction = -1; //move left
-            nextX = target.x + (target.speed * target.direction);
+            nextX = target.x + (target.speedX * target.direction);
         }
         else if(dKeyDown){
             target.direction = 1; //move right
-            nextX = target.x + (target.speed * target.direction);
+            nextX = target.x + (target.speedX * target.direction);
         }
         
         //vertical
-        nextY = drone.up ? (target.y - target.speed) : (target.y + target.speed);
+        nextY = drone.up ? (target.y - target.speedY) : (target.y + target.speedY);
         
     } else {    //target is not a container
         
-        nextX = target.x + (target.speed * target.direction);
-        nextY = (target.y + target.speed);  //can only fall downward
+        nextX = target.x + (target.speedX * target.direction);
+        nextY = (target.y + target.speedY);  //can only fall downward
     }
     
     return new createjs.Point(nextX, nextY);
