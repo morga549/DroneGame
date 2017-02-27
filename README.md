@@ -5,12 +5,12 @@ Drone Delivery is a platform-style JavaScript web-browser game. It is built insi
 
 ##1. OBJECTIVE
 
-Players must pick up and deliver The Package (land while carrying it) to the Drop Zone of each course before time runs out on the Game Timer, while avoiding all hazards.
+Players must pick up and deliver The Package to the Drop Zone of each course before time runs out on the Game Timer, while avoiding all hazards.
 
 
 ##2. GAME OBJECTS
 
-###2.1. Interactive
+###2.1. INTERACTIVE OBJECTS
 ####Hazards
 -  The Ocean
 -  Birds
@@ -25,16 +25,18 @@ Players must pick up and deliver The Package (land while carrying it) to the Dro
 
 
 ##3. RULES
-###Game Timer
+###Game Timer Rules
 -  The Game Timer countdown begins when the player presses SPACEBAR at the beginning
 of the course
 
-###Game Ending
--  If the Drone lands in the Drop Zone while carrying The Package before the Game
-Timer runs out, the course is won
+###Drone and Package Destruction Rules
 -  The Drone and The Package are destroyed if they collide with a hazard
 -  The Drone and The Package are not destroyed if they collide with a neutral object
 -  The Drone and The Package are not destroyed if they collide with the canvas edge
+
+###Game Ending Rules
+-  If the Drone lands in the Drop Zone while carrying The Package before the Game
+Timer runs out, the course is won
 -  If either the Drone or The Package are destroyed, player loses the course
 -  If the Game Timer reaches 0:00 before delivery, player loses the course
 
@@ -50,7 +52,9 @@ Timer runs out, the course is won
 Players control a Drone using the keyboard and mouse.
 
 A-KEY:      if the Drone is not landed, move Drone left
+
 D-KEY:      if the Drone is not landed, move Drone right
+
 LEFT MOUSE: click and hold to make the Drone fly upward
 
 
