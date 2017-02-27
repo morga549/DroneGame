@@ -107,7 +107,7 @@ function load() { //alert("load()");
         images: ["Bird1.png"],
         frames: {width:200, height:176},
         animations: {flap:[0,1]},
-        framerate: 1
+        framerate: 2
     };
 }
 
@@ -125,7 +125,7 @@ function init() { //alert("init()");
     //fade it out
     createjs.Ticker.framerate = 60;
     createjs.Ticker.addEventListener("tick", function(e) { stage.update(e); });
-    createjs.Ticker.framerate = createjs.Ticker.RAF_SYNCHED;
+    createjs.Ticker.timingMode = createjs.Ticker.RAF_SYNCHED;
     createjs.Tween.get(loadScreen).wait(2000).to({alpha:0}, 2000).call(buildGame);
 }
 
@@ -166,6 +166,7 @@ function startGame(e){ //alert("startGame()");
         
         //animation
         waveAnimation = window.setInterval(moveWaves, WAVE_INT);
+
     }
 }
 
@@ -191,7 +192,7 @@ function detectKey(e){ //alert("detectKey()");
             break;
         case SPACEBAR:
             if(createjs.Ticker.paused){
-                alert("restart course");
+                alert("restart game");
             }
             else if (!parcel.carried){
                 checkPickup(parcel);
@@ -305,7 +306,7 @@ function buildGUI(){ //alert("buildGUI()");
     buildGameTimer("white");
     
     //diagnostic
-    //buildLine();
+    buildLine();
     buildDebugText();
 }
 
@@ -452,12 +453,12 @@ function buildCourse1(){ //alert("buildCourse1()");
     
     //add game hazards
     buildOcean(10,10,15,0,20);
-    
+    buildBird(25, 250, 200, 176);
     //add actors
     buildDrone();
     buildContainer();   //drone before container for proper container bounds
     buildParcel();
-    buildBird(100, 100);
+
     
     startTime = COURSE_1_TIME;  //set start time//starting positions per course
     
@@ -485,15 +486,18 @@ function buildBackground(target){//alert("buildBackground()");
     stage.addChild(sky);
 }
 
-function buildBird(x,y) {
+function buildBird(x,y,w,h) {
     var spriteSheet = new createjs.SpriteSheet(ssData);
-    var bird = new createjs.Sprite(spriteSheet, "flap");
-    bird.scaleX = .5;
-    bird.scaleY = .5;
-    bird.framerate = 10;
-    bird.x = x;
-    bird.y = y;
-    stage.addChild(bird);
+    bird1 = new createjs.Sprite(spriteSheet, "flap");
+    //bird1.scaleX = .5;
+    //bird1.scaleY = .5;
+    bird1.framerate = 20;
+    bird1.x = x;
+    bird1.y = y;
+    bird1.setBounds(bird1.x, bird1.y, w, h);
+    bird1.onCollision = neutralResponse;
+    stage.addChild(bird1);
+    gameObjectsArr.push(bird1);
 }
 
 function buildWall(x,y,w,h, color){ //alert("buildWall()");
@@ -1304,14 +1308,14 @@ function moveWaves(e){
 function buildLine(){ //for diagnostic purposes
     
     var line = new createjs.Shape();
-    line.graphics.beginStroke("red").drawRect(0,0,268,107);
+    line.graphics.beginStroke("red").drawRect(bird1.getBounds().x, bird1.getBounds().y, bird1.getBounds().width, bird1.getBounds().height);
     stage.addChild(line);
 }
 
 /*
  Function adds a Text display object to display object properties during game.
  */
-function buildDebugText(){  //alert("buildDebugText()");//for diagnostic purposes
+function buildDebugText(){  //alert("buildDebugText()b");//for diagnostic purposes
     
     debugText = new createjs.Text("", "15px Arial", "red");
     debugText.x = 10;
@@ -1320,8 +1324,9 @@ function buildDebugText(){  //alert("buildDebugText()");//for diagnostic purpose
 }
 
 function updateDebugText(){
-    
-    debugText.text  = "Dropzone intersects dContainer?: " + dropZone.getBounds().intersects(dContainer.getBounds()) + "\t Carried: " + parcel.carried + "\t Landed: " + dContainer.landed;
+
+    debugText.text  = "Bird1 Bounds W: " + bird1.getBounds().width +  "Drone Intersect Bird? "
+    + drone.getBounds().intersects(bird1.getBounds());
 }
 
 
