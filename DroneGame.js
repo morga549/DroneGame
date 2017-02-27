@@ -66,10 +66,10 @@ const PROP_WIDTH = 30;  //width of a propeller
 var debugText;
 
 //createjs objects
-var queue, stage;
+var queue, stage, spriteSheet, ssData;
 
 //game objects
-var dContainer, drone, parcel, ocean, dropZone;
+var dContainer, drone, parcel, ocean, dropZone, bird1;
 var pauseText, timerText, timer, startTime, pauseRect, startupText, loadScreen;
 var droneHomeX, droneHomeY, parcelHomeX, parcelHomeY;//starting positions per course
 var waveAnimation; //reference to window interval for wave animation
@@ -102,6 +102,13 @@ function load() { //alert("load()");
         {id:"sky2", src:"Sky2.png"},            //night
         {id:"startup", src:"Startup.png"}       //startup screen
     ]);
+
+    ssData = {
+        images: ["Bird1.png"],
+        frames: {width:200, height:176},
+        animations: {flap:[0,1]},
+        framerate: 1
+    };
 }
 
 function init() { //alert("init()");
@@ -117,7 +124,8 @@ function init() { //alert("init()");
     
     //fade it out
     createjs.Ticker.framerate = 60;
-    createjs.Ticker.addEventListener("tick", function(e) { stage.update(); });
+    createjs.Ticker.addEventListener("tick", function(e) { stage.update(e); });
+    createjs.Ticker.framerate = createjs.Ticker.RAF_SYNCHED;
     createjs.Tween.get(loadScreen).wait(2000).to({alpha:0}, 2000).call(buildGame);
 }
 
@@ -449,6 +457,7 @@ function buildCourse1(){ //alert("buildCourse1()");
     buildDrone();
     buildContainer();   //drone before container for proper container bounds
     buildParcel();
+    buildBird(100, 100);
     
     startTime = COURSE_1_TIME;  //set start time//starting positions per course
     
@@ -474,6 +483,17 @@ function buildBackground(target){//alert("buildBackground()");
     var sky = new createjs.Bitmap(image);
     sky.x = sky.y = 0;
     stage.addChild(sky);
+}
+
+function buildBird(x,y) {
+    var spriteSheet = new createjs.SpriteSheet(ssData);
+    var bird = new createjs.Sprite(spriteSheet, "flap");
+    bird.scaleX = .5;
+    bird.scaleY = .5;
+    bird.framerate = 10;
+    bird.x = x;
+    bird.y = y;
+    stage.addChild(bird);
 }
 
 function buildWall(x,y,w,h, color){ //alert("buildWall()");
