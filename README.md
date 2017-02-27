@@ -1,31 +1,30 @@
-# DroneGame
-NDSU Spring 2017
-CSCI 313 Project
+# Drone Delivery
+NDSU Spring 2017 | CSCI 313 Project
 
-Drone Delivery is a platform-style JavaScript web-browser game. 
-It is built inside a DOM Canvas object in HTML and utilizes the createjs library.
+Drone Delivery is a platform-style JavaScript web-browser game. It is built inside a DOM Canvas object in HTML and utilizes the createjs library.
 
-##OBJECTIVE
+##1. OBJECTIVE
 
 Players must pick up and deliver The Package (land while carrying it) to the Drop Zone of each course before time runs out on the Game Timer, while avoiding all hazards.
 
 
-##GAME OBJECTS (interactive)
+##2. GAME OBJECTS
 
-###Hazards
+###2.1. Interactive
+####Hazards
 -  The Ocean
 -  Birds
 
-###Neutral objects
+####Neutral objects
 -  Walls
 -  Platforms
 -  Pickup Objects (i.e. The Package)
 
-###Positives
+####Positives
 -  Drop Zone
 
 
-## RULES
+##3. RULES
 ###Game Timer
 -  The Game Timer countdown begins when the player presses SPACEBAR at the beginning
 of the course
@@ -46,7 +45,7 @@ Timer runs out, the course is won
 -  All pickup objects bounce horizontally off neutral objects and the canvas edges
 
 
-##CONTROLS
+##4. CONTROLS
 ###Drone
 Players control a Drone using the keyboard and mouse.
 
@@ -71,34 +70,31 @@ SPACEBAR:   if the game is showing the Gameplay Explanation, start the game
 if the game is paused, causes the game to restart
 
 
-##GAME DESIGN (basic)
+##5. GAME DESIGN
+###5.1 Basic Game Design
 The game is composed of objects, variables, and functions.
 
-###Objects
+####5.1.1. Objects
 Objects are composed of standard classes of the createjs library.
 
 -  createjs.Ticker
-
 -  stage       (Stage)
 -  dContainer  (Container)
-
 -  sky         (Bitmap)        (i.e. background image)
 -  birds       (Sprite)
-
 -  text        (Text)          (multiple)
-
 -  drone       (Shape)
 -  ocean       (Shape)
 -  walls       (Shape)         (multiple)
 -  dropZone    (Shape)
 
 
-####About createjs.Ticker:
+#####About createjs.Ticker:
 createjs.Ticker is a built-in component of Stage. It triggers a "tick" event based
 on a given framerate. For Drone Delivery we use 60 frames per second, so the "tick"
 event occurs 60 times per second. Game mechanics are based on this "tick" event.
 
-####About dContainer:
+#####About dContainer:
 dContainer is a container that can contain children. At game start, dContainer contains 
 the Drone. The Drone cannot be removed from dContainer. If the Drone "picks up" a 
 pickup object (i.e. The Package), that object is also added to dContainer. If the Drone
@@ -109,18 +105,18 @@ children as well.
 
 
 
-###Variables
+####5.1.2. Variables
 -  gameObjectsArr  (array containing all objects the Drone can interact with)
 -  movingArr       (array containing all objects that user can interact with that are
 currently moving through the air (i.e. Drone, The Package, etc.))
 
-####How Variables Are Used
+#####How Variables Are Used
 -  Once the game has started, the game loops through all objects in movingArr, updating
 and rendering their positions.
 -  Updating movingArr object positions involves performing collision detection against
 all objects in the gameObjectsArr.
 
-####Variable Rules:
+#####Variable Rules:
 -  If The Package or a similar pickup object are picked up, it is removed from the
 gameObjectsArr.
 -  If The Package or a similar pickup object are dropped, it is added to the movingArr.
@@ -129,30 +125,30 @@ is removed from the movingArr and added to the gameObjectsArr.
 
 
 
-###functions
+####5.1.3. functions
 Each function will be described in detail in the implementation section.
 Drone Delivery contains the following functions:
 
 
-####startup functions
+#####startup functions
 -  load()
 -  init()
 -  buildGame()
 -  startGame()
 -  restartGame()
 
-####game input
+#####game input
 -  detectKey(e)
 -  removeKey(e)
 -  moveUp(e)
 -  moveDown(e)
 
-####game mechanics
+#####game mechanics
 -  runGame(e)
 -  pauseGame(e)
 -  setCourseOver(scenario)
 
-####game GUI
+#####game GUI
 -  buildGUI()
 -  buildPauseMenu(color)
 -  buildPauseRect(w, h, color)
@@ -161,11 +157,11 @@ Drone Delivery contains the following functions:
 -  updateTimer(t)
 -  buildStartupMessage()
 
-####game courses
+#####game courses
 -  buildCourse(number)
 -  buildCourse1()
 
-####game objects
+#####game objects
 -  buildBackground(target)
 -  buildBird(x,y,w,h)
 -  buildWall(x,y,w,h,color)
@@ -175,13 +171,13 @@ Drone Delivery contains the following functions:
 -  buildParcel()
 -  buildOcean(n, h, depth, a, b)
 
-####collision detection
+#####collision detection
 -  detectCollision(target, nextX, nextY)
 -  revisePosition(target, cObject, nextX, nextY, revisedArr)
 -  detectEdgeOfFrame(target, nextX, nextY)
 -  mostRestrictive(target, revisedArr, pt)
 
-####game actions
+#####game actions
 -  checkPickup(target)
 -  pickup(target)
 -  drop(target)
@@ -189,7 +185,7 @@ Drone Delivery contains the following functions:
 -  hazardResponse()
 -  dropZoneResponse()
 
-####movable object update / rendering
+#####movable object update / rendering
 -  calcNextPosition(target)
 -  performCollisionDetection(target, nextX, nextY)
 -  getChildClone( child)
@@ -199,7 +195,7 @@ Drone Delivery contains the following functions:
 -  detectLanding(target)
 -  updateChildrenBounds(container, cX, cY)
 
-####animation
+#####animation
 -  movePropellers()
 -  moveWaves(e)
 
@@ -207,11 +203,9 @@ Drone Delivery contains the following functions:
 
 
 
-GAME DESIGN (advanced):
-------------
+###5.2 Advanced Game Design
 
-Dynamically Injected Properties
---------------------------------------------------------------------------------------
+####Dynamically Injected Properties
 JavaScript suppports dynamically injected properties. Drone Delivery utilizes this 
 feature extensively to store object data. Dynamically injected properties in Drone Delivery include:
 
@@ -241,10 +235,10 @@ a moving object, the hazardResponse() method will be called, which ends the cour
 
 
 
-Known Bugs
---------------------------------------------------------------------------------------
+##6. Bugs
 
-**Bug 3.01 If land on surface while carrying package, then let go of package, then grab again, sometimes the package sinks below the surface, and when you grab it again, it got the values -30,-33. Has something to with the shiftX, shiftY in Step 2 B of the updatePosition() method. For now, I mitigated it by only choosing to update to point values that are greater than or equal to zero.
+###Bug 3.01 
+If Drone lands on surface while carrying package, then lets go of package, then grabs again, sometimes the package sinks below the surface, and when you grab it again, dContainer is getting the call to move to position -30,-33. Has something to with the shiftX, shiftY in Step 2 B of the updatePosition() method. For now, I mitigated it by only choosing to update to point values that are greater than or equal to zero.
 
-*/
+
 
