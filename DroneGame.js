@@ -132,7 +132,10 @@ function init() { //alert("init()");
 
 function buildGame(){ //alert("removeStartup()");
     
-    stage.removeChild(loadScreen);
+    if(stage.contains( loadScreen)){
+        stage.removeChild(loadScreen);
+    }
+    
     createjs.Ticker.reset(); //remove all event listeners and restart runGame time
     buildCourse(currentCourse);
     buildGUI(); //after building course, so that text appears over image
@@ -142,6 +145,7 @@ function buildGame(){ //alert("removeStartup()");
     buildPauseRect(500,300,"white");
     buildStartUpMessage();
     window.onkeydown = startGame;
+    //alert(window.onkeydown);
     
 }
 
@@ -157,6 +161,7 @@ function startGame(e){ //alert("startGame()");
         //Ticker
         createjs.Ticker.framerate = 60;
         createjs.Ticker.addEventListener("tick", runGame);
+        //createjs.Ticker.timingMode = createjs.Ticker.RAF_SYNCHED;   //??add here?
         
         //listen for key / mouse events
         window.onkeydown  = detectKey;
@@ -170,6 +175,16 @@ function startGame(e){ //alert("startGame()");
     }
 }
 
+function restartGame(e){
+    //remove event listeners from window
+    window.removeEventListener("keydown", detectKey);
+    window.removeEventListener("keyup", removeKey);
+    window.removeEventListener("mousedown", moveUp);
+    window.removeEventListener("mouseup", moveDown);
+    
+    createjs.Ticker.paused = false;  //unpause Ticker
+    buildGame();
+}
 
 
 
@@ -192,7 +207,8 @@ function detectKey(e){ //alert("detectKey()");
             break;
         case SPACEBAR:
             if(createjs.Ticker.paused){
-                alert("restart game");
+                //alert("restart game");
+                restartGame();
             }
             else if (!parcel.carried){
                 checkPickup(parcel);
