@@ -964,6 +964,8 @@ function pickup(target){ //alert("pickup()");
 
 function drop(target){ //alert("drop()");
     
+    var cBounds;
+    
     //parcel x,y is relative to dContainer and must be readjusted to stage
     var shiftX = (dContainer.width - target.width) /2;
     var shiftY = drone.height;
@@ -996,7 +998,10 @@ function drop(target){ //alert("drop()");
     
     //update dContainer properties
     dContainer.height -= target.height; //no longer carrying the parcel
-    dContainer.getBounds().height -= target.height; //update height bounds as well
+    
+    //update dContainer bounds
+    cBounds = dContainer.getBounds();
+    dContainer.setBounds(cBounds.x, cBounds.y, cBounds.width, dContainer.height);
 }
 
 function neutralResponse(){ //alert("neutralResponse()");
