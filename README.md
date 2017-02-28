@@ -349,6 +349,16 @@ Graphics can be added to Shapes in two ways.
     +  second half is mirrored about the y-axis
 - When the bezier curve has the y value of its two control points symmetric about the starting y and ending y of the curve, there is symmetry as well
 
+###5.4 GAME DESIGN (COLLISION DETECTION)
+Collision detection for dContainer is partly based upon its children. Drone Delivery is designed so that dContainer cannot be moved to a place where one of its children collides with a game object. This is accomplished in the following way:
+-  For each child:
+    +  determine if that child has any collisions in its next calculated position
+    +  for any such collisions, determine the most restrictive revised position the child can be moved to (this is done by considering all possible collisions that the child has at the given moment, finding a revised point for each collision, and keeping only the most restrictive)
+-  After all children:
+    +  determine the most restrictive revised position for dContainer, based on the most restrictive revised position for each of its children
+    +  keep only the most restrictive
+    +  use it to set the final revised position for dContainer
+
 
 ##6. Bugs
 ###Bug 3.01 
@@ -375,6 +385,12 @@ If Drone lands on surface while carrying Parcel, then lets go of Parcel, then gr
 -  Drone Upgrades
     +  after a certain number of levels, given option to choose a faster drone or one that can carry heavier loads
     +  improvements indicated by different color for drone body
+-  Performance points
+    +  player could gain or lose points based on how precisely they navigate a given course (how many walls they hit, etc.)
+-  Accrued damage
+    + drone could be slightly damaged each time it hits a wall
+    + too many hits could destroy the drone
+    + could require spending points to repair drone after each course
 
 
 

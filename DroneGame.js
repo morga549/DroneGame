@@ -30,7 +30,7 @@ const ESC_KEY = 27;
 const SPACEBAR = 32;
 
 //amount of time in milliseconds for a given course
-const COURSE_1_TIME = 1000*60*3;    //3 min
+const COURSE_1_TIME = 1000*60*2;    //2 min
 
 //animation
 const WAVE_INT = 1000;  //length in ms of the interval for wave movement
@@ -1090,7 +1090,7 @@ function mostRestrictive(target, revisedArr, pt){//alert("mostRestrictive()");
 //                                game actions                                //
 //============================================================================//
 /**
- 
+ Function determines whether target and Drone are in the correct position relationship for the Drone to "pick up" the target. If they are in the correct position, this function then calls pickup().
  */
 function checkPickup(target){
     
@@ -1099,121 +1099,136 @@ function checkPickup(target){
     if(dContainer.landed){  //must land to pick up objects
         
         //get current bounds of drone
-        droneBounds = drone.getBounds();
+        droneBounds = drone.getBounds();    //return Rectangle object
         
-        //adjust to reduce pickup area to black grabbing pad only
+        //adjust properties of Rectangle so 'pickup area' is only black grabbing pad
         droneBounds.x += (drone.width - 24)/2;
         droneBounds.width = 24;
-        //alert(droneBounds);
         
-        //get target bounds to compare against
+        //get target bounds to compare against adjusted bounds
         targetBounds = target.getBounds();
         
-        if(droneBounds.intersects(targetBounds)){
-            //alert("intersect");
+        if(droneBounds.intersects(targetBounds)){   //all conditions are met
             pickup(target);
         }
     }
 }
 
 
+/**
+ Functions performs all operations necessary to simulate "picking up" a given target.
+ */
 function pickup(target){ //alert("pickup()");
     
-    var index;
+    var index, cBounds;
     var adjustedX, adjustedY;
     
     
-    //remove parcel from array of game objects
-    index = gameObjectsArr.indexOf(target); //get index of parcel in array
+    //remove target from gameObjectsArr so target can't be collided with by Drone
+    index = gameObjectsArr.indexOf(target); //get index of target in array
     
-    if(index !== -1)    //parcel is in the array
+    if(index !== -1)    //target is in the array
     {
-            gameObjectsArr.splice(index,1);    //remove parcel from array
+            gameObjectsArr.splice(index,1);    //remove target from array
     }
     
-    //alert(movingArr.indexOf(parcel));
-    
-    //add Package to dContainer
+    //add target to dContainer
     dContainer.addChild(target);   //adding to dContainer removes from Stage
     
-    //update dContainer properties
+    //update dContainer properties to reflect it is now also carrying target
     dContainer.height += target.height;
     
-    //update Package properties
+    //update target properties
     target.carried = true;
-    //alert("carried");
     
-    //determine correct position inside container
+    //determine correct position of target inside container (center below drone)
     adjustedX = (dContainer.width - target.width) /2;
     adjustedY = drone.height;
+    
+    //move parcel to exact position
     target.x = adjustedX;
     target.y = adjustedY;
     
-    //move parcel to exact position
-    //createjs.Tween.get(target).to({x:adjustedX, y:adjustedY}, 100, createjs.Ease.quadOut);
-    
-    //adjust parcel bounds to match position relative to container
+    //adjust target bounds to match position inside container
     target.setBounds(target.x, target.y, target.width, target.height);
-    //alert("Container: " + dContainer.x + "," + dContainer.y + "," + dContainer.height + "\nParcel: " + target.x +"," + target.y);
+    
+    //update dContainer bounds to reflect it is now also carrying target
+    cBounds = dContainer.getBounds();
+    dContainer.setBounds(cBounds.x, cBounds.y, cBounds.width, dContainer.height);
 }
 
-
+/**
+ Function performs all operations necessary to simulate "dropping" a given target. At the moment of dropping, current target x,y is relative to dContainer and must be adjusted to reflect position relative to stage.
+ */
 function drop(target){ //alert("drop()");
     
     var cBounds;
+    var shiftX, shiftY;
+    var globalPt;
     
-    //parcel x,y is relative to dContainer and must be readjusted to stage
-    var shiftX = (dContainer.width - target.width) /2;
-    var shiftY = drone.height;
-    var globalPt = target.localToGlobal(target.x-shiftX, target.y-shiftY);
+    //determine how much target is shifted in container, relative to 0,0 of container
+    shiftX = (dContainer.width - target.width) /2;
+    shiftY = drone.height;
     
-    //update properties
-    target.direction = dContainer.direction;
-    target.speedY = dContainer.speedY*2;
-    target.speedX = dContainer.speedX;
-    target.carried = false;
-    target.landed = false;
+    //convert this shifted position into an x,y relative to stage
+    globalPt = target.localToGlobal(target.x-shiftX, target.y-shiftY);
     
-    //move to correct position inside stage
+    //update properties to reflect having been dropped
+    target.direction = dContainer.direction;    //moves in same direction as parent
+    target.speedY = dContainer.speedY*2;    //falls faster downward than parent
+    target.speedX = dContainer.speedX;  //falls horizontally at same speed as parent
+    target.carried = false; //no longer carried
+    
+    
+    //move target to calculated position relative stage
     target.x = target.nextX = globalPt.x;
-    target.y = target.nextY = globalPt.y;//-target.speed;
+    target.y = target.nextY = globalPt.y;
     
-    //adjusts bounds to match position relative to stage
+    //adjusts target bounds to match new position
     target.setBounds(target.x, target.y, target.width, target.height);
     
-    //add Package to stage
+    //add target to stage
     stage.addChild(target);    //adding to stage removes from dContainer
     
-    //add Package to movingArr
-    //alert("drop" + parcel.landed);
-    
+    //check whether to add target to movingArr
     if(!dContainer.landed){ //mid-air drop
         movingArr.push(target);
-    } else {
+        target.landed = false;
+    }
+    else {  //drop while having landed on the ground
         gameObjectsArr.push(parcel);
+        target.landed = true;
     }
     
-    //update dContainer properties
-    dContainer.height -= target.height; //no longer carrying the parcel
+    //update dContainer properties to reflect no longer carrying target
+    dContainer.height -= target.height; //remove extra height
     
     //update dContainer bounds
     cBounds = dContainer.getBounds();
     dContainer.setBounds(cBounds.x, cBounds.y, cBounds.width, dContainer.height);
 }
 
+/**
+ Function does nothing on purpose. Does allow for future possibility of keeping track of how accurately a pilot navigates a course. (More wall hits could mean worse performance). Also allows for possibility that too many wall hits could damage or destroy drone as well.
+ */
 function neutralResponse(){ //alert("neutralResponse()");
     //nothing occurs on purpose
 }
 
+/**
+ Function triggers the course to be over. Could also include animation for destroying the Drone or Package.
+ */
 function hazardResponse(){//alert("hazardResponse()");
     
     setCourseOver(0);
 }
 
-
+/**
+ Function triggers a check of whether conditions are met for course to be won.
+ */
 function dropZoneResponse() { //alert("dropZoneResponse()");
 
-    if(parcel.carried && dContainer.landed) {
+    if(parcel.carried && dContainer.landed) {   //meets conditions
         setCourseOver(1);
     }
 }
@@ -1224,16 +1239,16 @@ function dropZoneResponse() { //alert("dropZoneResponse()");
 //                      movable object update / rendering                     //
 //============================================================================//
 
-
-//helper
+/**
+ Helper function determines the next position of target, based on speed and direction. If target is a container, function checks for user input (container will contain the Drone, which the player can fly upward). Function returns a point that represents the next x,y position.
+ */
 function calcNextPosition(target){
     
     var nextX = target.x;   //current position
     var nextY = target.y;   //current position
     
-    if(target.isContainer){
+    if(target.isContainer){ //movement is controlled by user input
         
-        //movement is controlled by user input
         target.direction = 0;   //reset value
         
         //horizontal
@@ -1249,28 +1264,34 @@ function calcNextPosition(target){
         //vertical
         nextY = drone.up ? (target.y - target.speedY) : (target.y + target.speedY);
         
-    } else {    //target is not a container
+    }
+    else {    //target is not a container and can only fall downward
         
         nextX = target.x + (target.speedX * target.direction);
-        nextY = (target.y + target.speedY);  //can only fall downward
+        nextY = (target.y + target.speedY);
     }
     
     return new createjs.Point(nextX, nextY);
 }
 
-//helper
+/**
+ Helper function performs the operations necessary to check for a collision between target and all objects in gameObjectsArr, based on calculated future position. Function returns an array that contains all objects that did collide with target.
+ */
 function performCollisionDetection(target, nextX, nextY){
 
-    var collisionArr = [];
-    var shiftX = shiftY = 0;    //default value
+    var collisionArr;   //to contain collided objects
+    var shiftX, shiftY; //for use with child of a container
     
-    if(target.parent !== stage){ //child of a container
+    collisionArr = [];      //reset for 0 objects
+    shiftX = shiftY = 0;    //default value
+    
+    if(target.parent !== stage){ //target is child of a container
         
         //determine amount child is shifted inside its container
         shiftX = target.x;
         shiftY = target.y;
 
-        //shift nextX and nextY to detect collisions with this child
+        //shift nextX, nextY (of container) to detect collisions for this child
         collisionArr = detectCollision(target, nextX + shiftX, nextY + shiftY);
     }
     else { //not a child
@@ -1280,47 +1301,72 @@ function performCollisionDetection(target, nextX, nextY){
     return collisionArr;
 }
 
-/*
- a clone is created because the function revisePosition() needs to consider where the child currently is in relation to the object it is colliding with in order to properly calculate what to do. We cannot use the child itself because it represents the future position of the object, not its current position.
+/**
+ Helper function constructs and returns a copy of given child.
+ 
+ A clone is created because the function revisePosition() needs it.
+ revisePosition() uses original position of child to determine the positioning 
+ relationship between the child and a collided object in order to properly calculate
+ what the revised position of the child should be. 
+ 
+ We cannot use the child itself because it represents the future position of the
+ object, not its current position.
+ 
+ In order to create a copy usable for revisePosition(), the child's x,y inside the
+ container must be converted to a global x,y relative to stage.
+ 
+ Also, the copy must store a reference to the original object to be able to update
+ properties if needed.
  */
-
-//helper
 function getChildClone(child){
     
-    var globalPt;
+    var globalPt, childClone;
 
     //Shape
-    var childClone = new createjs.Shape();
+    childClone = new createjs.Shape();
     
-    //calculate global x,y of child original location, relative to stage
-    globalPt = child.localToGlobal(0,0);
+    //calculate global x,y of child's original location, relative to stage
+    globalPt = child.localToGlobal(0,0);    //??should be shifted??
     childClone.x = globalPt.x;
     childClone.y = globalPt.y;
     
-    //copy properties of child
-    childClone.width = child.width;
-    childClone.height = child.height;
-    childClone.cloneOf = child; //for updating "landed" property of real child
-    childClone.name = "clone";
+    //copy properties of child to clone
+    childClone.width    = child.width;
+    childClone.height   = child.height;
+    childClone.cloneOf  = child; //for updating "landed" property of real child
+    childClone.name = "clone";  //to flag that this object is a clone
     
     return childClone;
 }
 
-//helper
+/**
+ Helper function calculates what the revised position of target should be, based on
+ the given objects the target has collided with at this moment, as well as the 
+ calculated future position target should have taken if the collision hadn't 
+ occurred.
+ 
+ Before calculating a revised position, function also checks what should occur based
+ on the type of object that target collided with.
+ */
 function performPositionRevision(target, collisionArr, nextX, nextY){
     var i;
-    var pt;
-    var possiblePts = [];
+    var pt; //represents a single revised point calculated through revisePosition()
+    var possiblePts;;   //represents all revised points calculated in this moment
+    
+    possiblePts = [];
     
     //consider each object that collided with the target
     for( i = 0; i < collisionArr.length; i++){
 
+        //check what other object does in collision
+        collisionArr[i].onCollision(); //calls function from onCollision property
 
-        collisionArr[i].onCollision(); //what other object does in collision
-
-        if(collisionArr[i].name != "dropZone") {
+        if(collisionArr[i].name != "dropZone") {    //for anything but dropZone
+            
             //determine revised global position based on collision situation
             pt = revisePosition(target, collisionArr[i], nextX, nextY, possiblePts);
+            
+            //update nextX, nextY
             nextX = pt.x;
             nextY = pt.y;
 
@@ -1328,106 +1374,144 @@ function performPositionRevision(target, collisionArr, nextX, nextY){
             possiblePts.push(pt);
         }
     } //end for loop
-
     return new createjs.Point(nextX, nextY);
 }
 
 
-
+/**
+ Function calculates the future position of target, given all possible scenarios.
+ Considers collisions, speed and direction, and edge of frame.
+ Function allow for any movable target, container or not, to use the same method to update its position.
+ 
+ The function is composed of four steps:
+    
+    1   Calculate next position of target
+    2   perform collision detection based on that next position
+        (different for children vs. non-containers)
+    3   Perform edge-of-frame detection for revised position from collision detection
+    4   Update nextX, nextY properties of object with final future position
+ 
+ If target is a container, future position is determined based on collisions of its 
+ children.
+ 
+ */
 function updatePosition(target){
     
     //variables used in function
     var i;
     var nextX, nextY;
-    var collisionArr = [];  //array to hold all objects target / child collides with
+    var collisionArr;       //to hold all objects target / child collides with
     var pt;                 //position to move target to for resolving collision
-    var possibleChildPts = [];
+    var possibleChildPts;   //to hold all calculated revised pts from each child
+    var child, childClone;
     
-    //Step 1 - calculate next position of target
+    //reset arrays
+    collisionArr = [];
+    possibleChildPts = [];
+    
+   
+    //      Step 1 - calculate next position of target
+    //-------------------------------------------------------
     pt = calcNextPosition(target);
+    
+    //store for use in function
     nextX = pt.x;
     nextY = pt.y;
-    //if(target.name === "parcel"){alert(nextX +"," + nextY);}
-    //Step 2 - perform collision detection based on that next position
-    if(target.isContainer){
+
+    
+    //       Step 2 - perform collision detection based on that next position
+    //----------------------------------------------------------------------------
+    if(target.isContainer){ //consider each of its children
         
-        pt.x = pt.y = -100; //flag value for no change needed
+        pt.x = pt.y = -100; //set flag value for no change needed
         
-        //Step 2 A - perform these calculations for every child
+        //        Step 2 A - perform these calculations for every child
+        //------------------------------------------------------------------------
         for( i = 0; i < target.numChildren; i++){
             
             //get child
-            var child = target.children[i];
+            child = target.children[i];
             
             //perform collision detection
             collisionArr = performCollisionDetection(child, nextX, nextY);
             
-            //perform position revision
+            //perform position revision based on collisions
             if(collisionArr.length > 0){ //hit something
-                //alert(collisionArr);
+                
                 //create a copy of child to compare original position w/ objects
-                var childClone = getChildClone(child);
+                childClone = getChildClone(child);
 
                 //use copy to find a revised position
-                //shift nextX and nextY to correspond to child, not container
+                //shift nextX, nextY to correspond to child, not container
                 pt = performPositionRevision(childClone, collisionArr, nextX+child.x, nextY+child.y);
                 
-                //remove shift from chosen revised position
+                //remove shift to reflect where container (not child) should be
                 pt.x -= child.x;    //x shift of child inside container
                 pt.y -= child.y;    //y shift of child inside container
                 
                 possibleChildPts.push(pt);  //store for comparison later
             }
-       
         } // end for
         
-        //determine most restrictive of the child points
+        
+        //determine most restrictive of all calculated the child points
         pt = mostRestrictive(target, possibleChildPts, pt);
   
                              
-        //Step 2 B - after processing children check if nextX, nextY needs changing
-        if(pt.x >= 0) { //collision changed x value
+        //         Step 2 B - check if nextX, nextY were changed based on Step 2A
+        //--------------------------------------------------------------------------
+        if(pt.x >= 0) {                     //collision changed x value
             nextX = pt.x;
-            //alert(pt); //**for some reason, got -30,-33 here
+            //alert(pt); //**bug**for some reason, got -30,-33 here
         }
-        if(pt.y >= 0){ //collision changed y value
+        if(pt.y >= 0){                      //collision changed y value
             nextY = pt.y;
         }
         
     } //end collision detection for container
     else { //target is not a container
-
+        
+        //        Step 2 A - perform these calculations for target
+        //------------------------------------------------------------------------
+        
         //perform collision detection
         collisionArr = performCollisionDetection(target, nextX, nextY);
 
         //perform position revision
-        if(collisionArr.length > 0){ //hit something
-            //alert(collisionArr);
+        if(collisionArr.length > 0){        //hit something
+
             pt = performPositionRevision(target, collisionArr, nextX, nextY);
-            //alert(pt);
+
         } //end if
     } //end collision detection for standalone object
     
     
     
-    //Step 3 - perform edge-of-frame detection based on that next position
+    //       Step 3 - perform edge-of-frame detection for current nextX,nextY
+    //-----------------------------------------------------------------------------
     pt = detectEdgeOfFrame(target, nextX, nextY);
-    //alert(pt);
-    if(pt.x !== -100){ //horizontal edge-of-frame occurred
+  
+    //check if nextX, nextY need changing
+    if(pt.x !== -100){                      //horizontal edge-of-frame occurred
         nextX = pt.x;
     }
-    if(pt.y !== -100){  //vertical edge-of-frame occurred
+    if(pt.y !== -100){                      //vertical edge-of-frame occurred
         nextY = pt.y;
     }
 
-    //Step 4 - update properties of target
+    //      Step 4 - update properties of target with final nextX, nextY
+    //--------------------------------------------------------------------------
     target.nextX = nextX;
     target.nextY = nextY;
 }
 
 
+/**
+ Function moves object by setting x,y based on stored nextX, nextY properties.
+ Function also updates bounds (and children bounds).
+ */
 function renderPosition(target){
-    //if(target.name === "parcel"){alert(target.nextX + "," + target.nextY);}
+
     //move target to calculated next position
     target.x = target.nextX;
     target.y = target.nextY;
@@ -1438,51 +1522,56 @@ function renderPosition(target){
     if(target.isContainer){
         updateChildrenBounds(target, target.x, target.y);
     }
-    
-    /*
-     //unnecessary
-    if( target.isContainer && drone.up){
-        movePropellers2();
-    }
-     */
 }
 
-
+/**
+ Function checks whether conditions are met for target to have "landed".
+ Performs operations necessary if target did land.
+ 
+ Conditions:
+    1       target is not in gameObjectsArr yet
+    2       target.landed == true
+    3       target.carried == false
+ 
+ */
 function detectLanding(target){ //alert("detectLanding()");
     
-    //check whether parcel is in game array already
-    var index = gameObjectsArr.indexOf(target);
+    var index;
     
-    //if parcel is not in game array and parcel landed
-    //and parcel is not inside the container, add to game objects array
-    if( index === -1 && !target.carried && target.landed){
+    //check whether target is in game array already
+    index = gameObjectsArr.indexOf(target);
+
+    if( index === -1 && !target.carried && target.landed){ //target meets conditions
+        
         gameObjectsArr.push(target);
-        //alert("landed");
     }
     
     //if parcel is in the movingArray, remove it
     index = movingArr.indexOf(target);
-    if(target.landed && index !== -1)
-    {
+    
+    if(target.landed && index !== -1){  //target is in movingArr
         movingArr.splice(index,1);
-        //alert(movingArr.indexOf(target));
-        //alert(target.x +"," + target.y);
     }
 }
 
+/**
+ Function updates the bounds of each child in given container, 
+ based on x,y of container.
+ */
 function updateChildrenBounds(container, cX, cY){
     
-    var i, xShift, yShift;
+    var i, xShift, yShift, child;
     for(i = 0; i < container.numChildren; i++){
         
-        var child = container.children[i];
-        //alert(child.getBounds());
+        child = container.children[i];
+        
+        //shift cX,cY to reflect position of child relative to container
         xShift = child.x;
         yShift = child.y;
         
         //child bounds set to correspond to bounds relative to stage
-        child.setBounds(container.x + xShift, container.y + yShift, child.width, child.height);
-    }
+        child.setBounds(cX + xShift, cY + yShift, child.width, child.height);
+    } //end for
 }
 
 
@@ -1490,48 +1579,70 @@ function updateChildrenBounds(container, cX, cY){
 //                                  animation                                 //
 //============================================================================//
 
-//drone animation
-function movePropellers(){//alert("movePropellers2()");
+/**
+ Function performs changes to drone to simulate movement of its propellers.
+ Simulates movement by shifting the position of a small gray rectangle along
+ each of the drone's propellers.
+ 
+ Function calculates a new position for the rectangle, while not allowing it
+ to move outside of propeller.
+ 
+ Changed position also reflects whether the Drone is flying upward or not.
+ If flying upward, the position change is larger to simulate that the propeller is
+ rotating more quickly.
+ */
+function movePropellers(){//alert("movePropellers()");
     
-    //change position of grey box, don't let go off of propeller
+    
     //find next position based on whether drone is flying upward or not
     drone.xPropeller = drone.up ? drone.xPropeller - 7 : drone.xPropeller - 2;
     
+    //change position of grey box, don't let go off of propeller
     if(drone.xPropeller < 0){ //goes off left side of each propellor
     
         drone.xPropeller = 25;   //reset
     }
-    d_drawRectPropellerL.x = drone.xPropeller;
-    d_drawRectPropellerR.x = (70 + drone.xPropeller);
+    //update reference to graphics.Rectangle graphics command objects stored at
+    //initialization of the Drone
+    d_drawRectPropellerL.x = drone.xPropeller;          //left propeller
+    d_drawRectPropellerR.x = (70 + drone.xPropeller);   //right propeller
     
 }
 
 
-//ocean animation
+/**
+ Function performs changes to ocean object to simulate wave movement.
+ Simulates movement by swapping cp1y and cp2y of each bezier curves that was used
+ to draw the ocean surface. This swap reverses the bezier curves.
+ */
 function moveWaves(e){
 
-    var i, cp1y, cp2y, temp;
-    var waveArr = ocean.curves;
+    var i, cp1y, cp2y, temp, wavArr;
+    
+    waveArr = ocean.curves; //get stored array of bezier graphics command objects
 
-        for(i = 0; i < waveArr.length; i++){
-            
-            cp1y = waveArr[i].cp1y;
-            cp2y = waveArr[i].cp2y;
-            //alert(cp1y +"," + cp2y);
-            //switch the cp1y and cp2y values for each Graphics.BezierCurveTo object
-            temp = cp1y;
-            waveArr[i].cp1y = cp2y;
-            waveArr[i].cp2y = temp;
-        }
+    for(i = 0; i < waveArr.length; i++){ //each stored bezier graphics command object
+        
+        cp1y = waveArr[i].cp1y;
+        cp2y = waveArr[i].cp2y;
+        temp = cp1y;
+        
+        //update the properties for each individual graphics command object
+        waveArr[i].cp1y = cp2y;
+        waveArr[i].cp2y = temp;
+    }
 }
 
+
+/**
+ 
+ */
 function tweenBird(bird, x2) {
 
     var x1 = bird.x;
     createjs.Tween.get(bird)
         .wait(500)
         .to({scaleX:1},{x:x2}, 2000);
-
 }
 
 //============================================================================//
