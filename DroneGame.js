@@ -75,7 +75,7 @@ function load() { //alert("load()");
 
     ssData = {
         images: ["Bird1.png"],
-        frames: {width:200, height:176},
+        frames: {width:75, height:66},
         animations: {flap:[0,1]},
         framerate: 2
     };
@@ -95,7 +95,7 @@ function init() { //alert("init()");
     //fade it out
     createjs.Ticker.framerate = 60;
     createjs.Ticker.addEventListener("tick", function(e) { stage.update(e); });
-    createjs.Ticker.timingMode = createjs.Ticker.RAF_SYNCHED;
+
     createjs.Tween.get(loadScreen).wait(2000).to({alpha:0}, 2000).call(buildGame);
 }
 
@@ -131,7 +131,7 @@ function startGame(e){ //alert("startGame()");
         //Ticker
         createjs.Ticker.framerate = 60;
         createjs.Ticker.addEventListener("tick", runGame);
-        //createjs.Ticker.timingMode = createjs.Ticker.RAF_SYNCHED;   //??add here?
+        createjs.Ticker.timingMode = createjs.Ticker.RAF_SYNCHED;   //??add here?
         
         //listen for key / mouse events
         window.onkeydown  = detectKey;
@@ -250,7 +250,6 @@ function runGame(e){ //alert("runGame()");
                 renderPosition(movingArr[i]);
             }
         }
-        
         updateDebugText();
         stage.update();
     }
@@ -448,7 +447,7 @@ function buildCourse1(){ //alert("buildCourse1()");
     
     //add game hazards
     buildOcean(10,10,15,0,20);
-    buildBird(25, 250, 200, 176);
+    buildBird(25, 250, 75, 66);
     //add actors
     buildDrone();
     buildContainer();   //drone before container for proper container bounds
@@ -493,6 +492,7 @@ function buildBird(x,y,w,h) {
     bird1.onCollision = neutralResponse;
     stage.addChild(bird1);
     gameObjectsArr.push(bird1);
+    tweenBird(bird1, 100);
 }
 
 function buildWall(x,y,w,h, color){ //alert("buildWall()");
@@ -1300,6 +1300,15 @@ function moveWaves(e){
             waveArr[i].cp1y = cp2y;
             waveArr[i].cp2y = temp;
         }
+}
+
+function tweenBird(bird, x2) {
+
+    var x1 = bird.x;
+    createjs.Tween.get(bird)
+        .wait(500)
+        .to({scaleX:1},{x:x2}, 2000);
+
 }
 
 //============================================================================//
