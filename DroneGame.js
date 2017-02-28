@@ -132,9 +132,18 @@ function init() { //alert("init()");
     //Ticker must be initialized to show fade out
     createjs.Ticker.framerate = 60;
     createjs.Ticker.addEventListener("tick", function(e) { stage.update(e); });
+<<<<<<< Updated upstream
   
+=======
+<<<<<<< HEAD
+    createjs.Ticker.timingMode = createjs.Ticker.RAF_SYNCHED;
+    
+>>>>>>> Stashed changes
     //waits 2 seconds, changes alpha property of loadScreen to 0 over 2 seconds
     //calls buildGame method when this change is complete
+=======
+
+>>>>>>> master
     createjs.Tween.get(loadScreen).wait(2000).to({alpha:0}, 2000).call(buildGame);
 }
 
@@ -176,10 +185,22 @@ function startGame(e){ //alert("startGame()");
         stage.removeChild(pauseRect, startupText);
 
         //Ticker
+<<<<<<< Updated upstream
 
         createjs.Ticker.framerate = 60;
         createjs.Ticker.addEventListener("tick", runGame);
         createjs.Ticker.timingMode = createjs.Ticker.RAF_SYNCHED;
+=======
+<<<<<<< HEAD
+        createjs.Ticker.framerate = 60; //set frames per second
+        createjs.Ticker.addEventListener("tick", runGame);  //call runGame per "tick"
+        //createjs.Ticker.timingMode = createjs.Ticker.RAF_SYNCHED;   //??add here?
+=======
+        createjs.Ticker.framerate = 60;
+        createjs.Ticker.addEventListener("tick", runGame);
+        createjs.Ticker.timingMode = createjs.Ticker.RAF_SYNCHED;   //??add here?
+>>>>>>> master
+>>>>>>> Stashed changes
         
         //listen for key / mouse events
         window.onkeydown  = detectKey;  //listener calls detectKey() for "keydown"
@@ -324,9 +345,17 @@ function runGame(e){ //alert("runGame()");
                 renderPosition(movingArr[i]);   //moves object to next position
             }
         }
+<<<<<<< Updated upstream
 
         detectLanding(parcel);  //checks whether parcel has landed
 
+=======
+<<<<<<< HEAD
+        detectLanding(parcel);  //checks whether parcel has landed
+        
+=======
+>>>>>>> master
+>>>>>>> Stashed changes
         updateDebugText();
         stage.update();         //redraws the stage
     }
@@ -577,12 +606,23 @@ function buildCourse1(){ //alert("buildCourse1()");
     
     //add game hazards
     buildOcean(10,10,15,0,20);
+<<<<<<< Updated upstream
 
     
     //add movable objects
     buildBird(25, 250, 75, 66);
   
     //add actors
+=======
+<<<<<<< HEAD
+    buildBird(25, 250, 200, 176);
+    
+    //add movable objects
+=======
+    buildBird(25, 250, 75, 66);
+    //add actors
+>>>>>>> master
+>>>>>>> Stashed changes
     buildDrone();
     buildContainer();   //drone before container for proper container bounds
     buildParcel();
