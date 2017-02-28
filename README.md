@@ -3,6 +3,10 @@ NDSU Spring 2017 | CSCI 313 Project | Last Updated: 27 Feb 2017
 
 Drone Delivery is a platform-style JavaScript web-browser game. It is built inside a DOM Canvas object in HTML and utilizes the createjs library.
 
+##0. TERMINOLOGY
+
+-  Movable object: object that can be moved or picked up using keyboard / mouse input. Movable objects will include the Drone and the Parcel.
+
 ##1. OBJECTIVE
 
 Players must pick up and deliver The Parcel to the Drop Zone of each course before time runs out on the Game Timer, while avoiding all hazards.
@@ -208,24 +212,55 @@ JavaScript suppports dynamically injected properties for objects. Drone Delivery
 
 -  carried
     +  used to flag whether the parcel is being carried by the Drone
+
 -  direction
     +  used to indicate whether movable object is moving right or left or neither
--  height
--  isContainer
--  landed
--  nextX
--  nextY
--  onCollision
--  speedX
--  speedY
--  width
--  up
--  xPropeller
 
+-  height
+    +  used to store the height in pixels of the given object
+
+-  isContainer
+    +  used to flag whether this object is a container or not
+    +  used in collision detection functions
+
+-  landed
+    +  used to indicate whether movable object has landed on a horizontal surface
+
+-  nextX
+    +  used to store the future x-position of given object
+
+-  nextY
+    +  used to store the future y-position of given object
+
+-  onCollision
+    +  used to store a reference to a function 
+    +  function can be called by using onCollision() 
+
+-  speedX
+    +  used to store current horizontal speed of given object
+    +  speed is never negative (only direction changes)
+
+-  speedY
+    +  used to store current vertical speed of given object
+    +  speed is never negative (only direction changes)
+
+-  width
+    +  used to store the width in pixels of given object
+
+-  up
+    +  used to flag that the Drone is moving upward
+
+-  xPropeller
+    +  used to store the current x-position of the animated band on the drone's propellers
+
+
+#####Note about onCollision
 It is possible to set a function as a property of an object. Certain objects have
 the property "onCollision". The idea is that if an object is collided into, we call 
 
-<that object>.onCollision(); 
+'''javascript
+<object Drone or Package collided with>.onCollision(); 
+'''
 
 and the function referenced there is called. For the case of a Flock-Of-Birds, 
 onCollision is set to hazardResponse. If a Flock-Of-Birds is collided into by 
