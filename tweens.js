@@ -23,16 +23,18 @@ function init(){
     sprite.framerate = 120;
     sprite.x = 100;
     sprite.y = 100;
+    sprite.setBounds(sprite.x, sprite.y, 75, 66);
     sprite.regX = 75 / 2;
     sprite.regY = 66 / 2;
 
     var dot = new createjs.Shape();
-    dot.graphics.beginFill("#000000").drawCircle(0,0, 5);
+    dot.graphics.beginFill("#000000").drawRect(0,0, 100, 100);
     dot.x = sprite.x;
     dot.y = sprite.y;
+    dot.setBounds(dot.x, dot.y, 100, 100);
 
-    var text = new createjs.Text(sprite.regX + " " + sprite.regY, "15px Arial", "#f00911");
-    text.x = text.y = 500;
+    var text = new createjs.Text("Intersects?" + dot.getBounds().intersects(sprite.getBounds()), "15px Arial", "#f00911");
+    text.x = text.y = 250;
 
     createjs.Tween.get(sprite, {loop:true} )
         .to({x:500}, 3000)
@@ -46,8 +48,8 @@ function init(){
     stage.update();
     createjs.Ticker.timingMode = createjs.Ticker.RAF_SYNCHED;
     createjs.Ticker.addEventListener("tick", function e(){
-        dot.x = sprite.x;
-        dot.y = sprite.y;
+        sprite.setBounds(sprite.x - (75/2), sprite.y - 33, 75, 66);
+        text.text = "X: " + sprite.getBounds().x + "\nY: " + sprite.getBounds().y + "\nIntersects?: " + sprite.getBounds().intersects(dot.getBounds());
         stage.update();
     });
 }
