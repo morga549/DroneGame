@@ -108,9 +108,9 @@ function load() { //alert("load()");
 
     ssData = {
         images: ["Bird1.png"],
-        frames: {width:75, height:66},
-        animations: {flap:[0,1]},
-        framerate: 2
+        frames: {width:75, height:66, count:2},
+        animations: {flap:[0,1, "flap", 0.1]}//,
+        //framerate: 2
     };
 }
 
