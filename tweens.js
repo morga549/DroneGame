@@ -46,6 +46,7 @@ function init(){
 
     stage.addChild(sprite, dot, text);
     stage.update();
+    //createjs.Ticker.framerate = 15;
     createjs.Ticker.timingMode = createjs.Ticker.RAF_SYNCHED;
     createjs.Ticker.addEventListener("tick", function e(){
         sprite.setBounds(sprite.x - (75/2), sprite.y - 33, 75, 66);

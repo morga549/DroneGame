@@ -1,4 +1,5 @@
 # Drone Delivery
+by Jack Morgan and Ryan Nelson
 NDSU Spring 2017 | CSCI 313 Project | Last Updated: 27 Feb 2017
 
 Drone Delivery is a platform-style JavaScript web-browser game. It is built inside a DOM Canvas object in HTML and utilizes the createjs library.
