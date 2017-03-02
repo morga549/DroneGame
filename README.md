@@ -1,67 +1,177 @@
 # Drone Delivery
 by Jack Morgan and Ryan Nelson
+
 NDSU Spring 2017 | CSCI 313 Project | Last Updated: 27 Feb 2017
 
 Drone Delivery is a platform-style JavaScript web-browser game. It is built inside a DOM Canvas object in HTML and utilizes the createjs library.
 
+##TABLE OF CONTENTS
+
+####0. Terminology
+
+####1. Narrative
+
+####2. Objective
+
+####3. Scene
+
+####4. Game Components
+
+#####4.1 Actors
+
+#####4.2 Environmental Forces
+
+#####4.3 Game Rules
+
+#####4.4 Game Events
+
+#####4.5 Game Platform
+
+#####4.6 Game Controls
+
+####5. Game Design
+
+#####5.1 Game Design (Basic)
+
+######5.1.1 Objects
+
+######5.1.2 Variables
+
+######5.1.3 Functions
+
+#####5.2 Game Design (Advanced Topics)
+
+#####5.3 Game Design (Collision Detection)
+
+####6. Bugs
+
+####7. Game Expansion Ideas
+
+
 ##0. TERMINOLOGY
 
 -  Movable object: object that can be moved or picked up using keyboard / mouse input. Movable objects will include the Drone and the Parcel.
+-  Pickup object: object that can be picked up and carried by the Drone.
 
-##1. OBJECTIVE
+##1. NARRATIVE
 
-Players must pick up and deliver The Parcel to the Drop Zone of each course before time runs out on the Game Timer, while avoiding all hazards.
+"It’s 2050 and delivering packages by Drone is all the rage! You have just enrolled in Drone Flying School to prepare for a career as a drone pilot. To successfully complete your training, you’ll need to guide Junior, your drone at hand, through a series of obstacle courses.
+
+Each course will test your ability to navigate around these hazards, think critically, and deliver your package on time. Future courses may unlock opportunities to upgrade your drone and fly in style."
 
 
-##2. GAME OBJECTS
 
-###2.1. INTERACTIVE OBJECTS
+##2. OBJECTIVE
+
+For each course, players must pick up and deliver The Parcel to the Drop Zone of each course before time runs out on the Game Timer, while avoiding all hazards. 
+
+Complete all courses to graduate from Drone Flying School as a pilot.
+
+
+##3. SCENE
+
+The game is laid out as a single platform, with the entire course visible. The background will be themed according to each particular course. Game title is displayed outside and above this field. 
+
+An overlay will display the following information during gameplay:
+-  Time remaining for delivery
+-  Current course number
+
+
+
+##4. GAME COMPONENTS
+
+###4.1. ACTORS
+####Player-Controlled
+-  Drone
+    + Junior is a flying drone that players control on screen. 
+    + He has twin engines and the ability to pick up certain objects. 
+    + Junior is destroyed if he collides with a hazard.
+    + Junior is not affected if he collides with a wall, platform, or edge of the screen.
+
+####NPCs
+-  The Parcel
+    + The Parcel can be picked up by the Drone.
+    + The Parcel is destroyed if it collides with a hazard.
+    + The Parcel is not affected if it collides with a wall, platform, or edge of the screen.
+
 ####Hazards
 -  The Ocean
--  Birds
+    + Forms the bottom of the course, and prevents Junior from landing.
 
-####Neutral objects
+-  Birds
+    + Birds fly back and forth in either a horizontal or vertical pattern.
+    + They each pause at the end of a movement, then turn around to fly the other way.
+
+####Neutrals
 -  Walls
+    + Form vertical boundaries neither the Drone nor any movable object can pass through.
+
 -  Platforms
--  Pickup Objects (i.e. The Parcel)
+    + Form horizontal boundaries neither the Drone nor any movable object can pass through.
+
+-  Game Timer
+    + show the remaining amount of time
+
 
 ####Positives
 -  Drop Zone
+    + Each course has a highlighted area called the Drop Zone.
+    + If Junior flies into the Drop Zone while carrying The Package, the course is successfully completed. 
+    + Nothing occurs if Junior flies into the Drop Zone without The Package.
+
+###4.2. ENVIRONMENTAL FORCES
+####Solidity
+-  No game objects (including the Drone and The Parcel) can go outside the canvas
+-  The Drone and pickup objects (i.e The Parcel) cannot pass through a neutral object
+-  All pickup objects bounce horizontally off neutral objects and the canvas edges
+
+####Gravity
+-  All pickup objects (i.e The Parcel) fall downward if dropped in the air
+-  The Drone falls downward if he is not using engine power
 
 
-##3. RULES
-###Game Timer Rules
--  The Game Timer countdown begins when the player presses SPACEBAR at the beginning
-of the course
 
-###Drone and Parcel Collision Rules
--  The Drone and The Parcel are destroyed if they collide with a hazard
--  The Drone and The Parcel are not destroyed if they collide with a neutral object
--  The Drone and The Parcel are not destroyed if they collide with the canvas edge
+###4.3. GAME RULES
+####Game Start Rules
+-    Junior and the Parcel will be positioned on platforms inside the course at the start of each attempt.
+-  Each course begins paused. 
 
-###Game Ending Rules
+####Game Ending Rules
 -  If the Drone lands in the Drop Zone while carrying The Parcel before the Game
 Timer runs out, the course is won
 -  If either the Drone or The Parcel are destroyed, player loses the course
 -  If the Game Timer reaches 0:00 before delivery, player loses the course
 
-###Movement Rules
--  No game objects (including the Drone and The Parcel) can go outside the canvas
--  The Drone and pickup objects (i.e The Parcel) cannot pass through a neutral object
--  All pickup objects (i.e The Parcel) fall downward if dropped in the air
--  All pickup objects bounce horizontally off neutral objects and the canvas edges
+###4.4. GAME EVENTS
+####Game start
+- At the start of each course, a Gameplay Explanation is shown.
+- The Game Timer countdown begins when the player presses SPACEBAR at the start of each course.
+
+####Game Ending
+-  If the course is won or lost, the game is paused and a message is displayed
+
+####Control Events
+-  Feedback from the keyboard and mouse is used to move the Drone in each course
 
 
-##4. CONTROLS
-###Drone
+
+###4.5. GAME PLATFORM
+Players are expected to have the following equipment:
+-  Computer with web browser
+-  Keyboard
+-  Mouse
+
+
+###4.6. GAME CONTROLS
+####Drone
 Players control a Drone using the keyboard and mouse.
 
 -  A-KEY:      if the Drone is not landed, move Drone left
 -  D-KEY:      if the Drone is not landed, move Drone right
--  LEFT MOUSE: click and hold to make the Drone fly upward
+-  LEFT MOUSE: click and hold to make the Drone fly upward; release the mouse button to let the Drone drift downward.
 
 
-###Pickup / Drop
+####Pickup / Drop Actions
 Players control interaction between the Drone and The Parcel through the keyboard.
 
 -  SPACEBAR:   if the Drone has landed with its grabber (black area) on The Parcel,
@@ -69,16 +179,17 @@ pick up The Parcel. If the Drone is carrying The Parcel, drop The
 Parcel.
 
 
-###Game Mechanics
+####Game Mechanics
 Players control game mechanics through the keyboard.
 
--  ESC:        pauses the game
--  SPACEBAR:   if the game is showing the Gameplay Explanation, start the game; if the game is paused, causes the game to restart
+-  ESC:        pauses the game if the game was going; unpauses the game if the game was paused.
+-  SPACEBAR:   if the game is showing the Gameplay Explanation, start the game; if the game is paused, causes the game to restart.
+
 
 
 ##5. GAME DESIGN
 ###5.1 GAME DESIGN (BASIC)
-The game is composed of objects, variables, and functions.
+The game is composed of JavaScript objects, variables, and functions.
 
 ####5.1.1. OBJECTS
 Objects are composed of standard classes of the createjs library.
@@ -155,6 +266,7 @@ Drone Delivery contains the following functions:
 -  runGame(e)
 -  pauseGame(e)
 -  setCourseOver(scenario)
+-  restartGame(e)
 
 #####game GUI
 -  buildGUI()
@@ -208,7 +320,7 @@ Drone Delivery contains the following functions:
 -  moveWaves(e)
 
 
-###5.2 GAME DESIGN (ADVANCED)
+###5.2 GAME DESIGN (ADVANCED TOPICS)
 
 ####Object Properties
 Each Shape or Bitmap object is a DisplayObject in createjs. DisplayObjects have certain default properties, and Drone Delivery uses some of these properties for key game functionality.
@@ -350,7 +462,9 @@ Graphics can be added to Shapes in two ways.
     +  second half is mirrored about the y-axis
 - When the bezier curve has the y value of its two control points symmetric about the starting y and ending y of the curve, there is symmetry as well
 
-###5.4 GAME DESIGN (COLLISION DETECTION)
+
+
+###5.3 GAME DESIGN (COLLISION DETECTION)
 Collision detection for dContainer is partly based upon its children. Drone Delivery is designed so that dContainer cannot be moved to a place where one of its children collides with a game object. This is accomplished in the following way:
 -  For each child:
     +  determine if that child has any collisions in its next calculated position
@@ -363,7 +477,7 @@ Collision detection for dContainer is partly based upon its children. Drone Deli
 
 ##6. Bugs
 ###Bug 3.01 
-If Drone lands on surface while carrying Parcel, then lets go of Parcel, then grabs again, sometimes the Parcel sinks below the surface, and when you grab it again, dContainer is getting the call to move to position -30,-33. Has something to with the shiftX, shiftY in Step 2 B of the updatePosition() method. For now, I mitigated it by only choosing to update to point values that are greater than or equal to zero.
+If Drone lands on surface while carrying Parcel, then lets go of Parcel, then grabs again, sometimes the Parcel sinks below the surface, and when Drone grabs it again, there is an issue where eventually dContainer is getting the call to move to position -30,-33. Has something to with the shiftX, shiftY in Step 2 B of the updatePosition() method. For now, we have mitigated it by only choosing to update to point values that are greater than or equal to zero.
 
 
 ##7. Game Expansion Ideas
@@ -373,6 +487,7 @@ If Drone lands on surface while carrying Parcel, then lets go of Parcel, then gr
 -  Add concept of a battery level
     +  flying the Drone lowers battery
     +  also include Power Ups to add more battery, so Drone can fly longer
+    +  battery visualization will appear at the top of the screen
 -  Power Ups
     +  invicibility from hazards
     +  invisibility (go through walls)
