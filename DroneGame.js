@@ -53,13 +53,14 @@ var parcel;     //the item the player must deliver to the Drop Zone
 var ocean;      //hazard forming the bottom of the playing area
 var dropZone;   //Drop Zone is an area player must deliver the parcel to
 var bird1;      //hazard
-
+var dot;
 //GUI objects
 var pauseText;  //text that is visible when game is paused
 var timerText;  //displays the remaining time in the course
 var pauseRect;  //white rectangle that text appears in front of at game start
 var startupText;//gameplay explanation displayed at game start
 var loadScreen; //reference to bitmap image object displayed before game start
+var levelNumber;
 
 //additional variables
 var startTime;                  //contains the time allowed for a given course
@@ -71,6 +72,7 @@ var d_drawRectPropellerR;       //(see readme for more information)
 
 //diagnostic
 var debugText;                  //used to diagnose certain game issues
+var boundBox;
 
 //drone customization for future gameplay
 var d_beginFillBody;            //in the case of Drone upgrades
@@ -83,6 +85,7 @@ var movingArr = [];             //contains all moving objects not in a container
 var aKeyDown = dKeyDown = escKeyDown = spacebarDown = false; //keyboard input flags
 var gameOver = courseOver = false;  //game flags
 var currentCourse = 1;  //contains the number of the current course being played
+var spriteArr = [];
 
 
 
@@ -174,10 +177,14 @@ function startGame(e){ //alert("startGame()");
         //remove unnecessary objects from stage
         stage.removeChild(pauseRect, startupText);
 
+
         //Ticker
         createjs.Ticker.framerate = 60;
         createjs.Ticker.addEventListener("tick", runGame);
-        createjs.Ticker.timingMode = createjs.Ticker.RAF_SYNCHED;   //??add here?
+
+
+
+
 
         
         //listen for key / mouse events
@@ -315,6 +322,7 @@ function runGame(e){ //alert("runGame()");
         
         updateTimer(e.runTime); //changes the time displayed on game timer
         movePropellers();       //animates the propellers
+        moveBirds();
         
         for(i = 0; i < movingArr.length; i++){ //process all moving objects
             
@@ -385,6 +393,7 @@ function buildGUI(){ //alert("buildGUI()");
     
     buildPauseMenu("#f0e906");  //displayed when game is paused
     buildGameTimer("white");    //visualization of game time remaining
+    buildLevelNumber(1);
     
     //diagnostic purposes
     buildLine();
@@ -578,7 +587,8 @@ function buildCourse1(){ //alert("buildCourse1()");
     buildOcean(10,10,15,0,20);
     
     //add movable objects
-    buildBird(25, 250, 75, 66);
+    buildBird(350, 175, 700, 1);
+    buildBird(25, 450, 350, 2);
     
     //add actors
     buildDrone();
@@ -614,22 +624,51 @@ function buildBackground(target){//alert("buildBackground()");
     stage.addChild(sky);
 }
 
+function buildLevelNumber(num){
+    levelNumber = new createjs.Text("Level: " + num, "10px Helvetica", "#fffdfd");
+    levelNumber.x = 750;
+    levelNumber.y = 75;
+    stage.addChild(levelNumber);
+    stage.update();
+}
+
 /**
- 
+ * -Builds a SpriteSheet based on predefined data, then uses
+ * this SpriteSheet to build a sprite animation of a bird flapping it's wings.
+ * -Adds sprite to stage.
+ * -Pushes sprite to an array of sprite objects (for animation).
+ * -Sets the bounds of the sprite, defines it's onCollision property, and pushes it into an array for collision detection.
+ * -regX and regY are changed for animation purposes.
+ * -
+ *
+ * @param {Number} x - starting x position of sprite
+ * @param {Number} y - starting y position of sprite
+ * @param {Number} x2 - x position at which sprite flips direction and moves back to orginal x position
+ * @param {Number} vel - change in x position per tick
  */
-function buildBird(x,y,w,h) {
+function buildBird(x,y,x2, vel) {
+
     var spriteSheet = new createjs.SpriteSheet(ssData);
-    bird1 = new createjs.Sprite(spriteSheet, "flap");
-    //bird1.scaleX = .5;
-    //bird1.scaleY = .5;
-    bird1.framerate = 20;
-    bird1.x = x;
-    bird1.y = y;
-    bird1.setBounds(bird1.x, bird1.y, w, h);
-    bird1.onCollision = neutralResponse;
-    stage.addChild(bird1);
-    gameObjectsArr.push(bird1);
-    tweenBird(bird1, 100);
+    var bird = new createjs.Sprite(spriteSheet, "flap");
+
+    bird.x = x;
+    bird.x2 = x2;
+
+    bird.xVel = vel;
+    bird.xHome = x;
+    bird.y = y;
+
+    bird.regX = 75/2;
+    bird.regY = 33;
+
+    bird.setBounds(bird.x -(75/2), bird.y - 33, 75, 66);
+
+    bird.onCollision = hazardResponse;
+
+    stage.addChild(bird);
+    gameObjectsArr.push(bird);
+    spriteArr.push(bird);
+
 }
 
 /**
@@ -1575,6 +1614,8 @@ function updateChildrenBounds(container, cX, cY){
 }
 
 
+
+
 //============================================================================//
 //                                  animation                                 //
 //============================================================================//
@@ -1632,18 +1673,36 @@ function moveWaves(e){
         waveArr[i].cp2y = temp;
     }
 }
+/**
+ * -Moves each "bird" sprite object in spriteArr from original x position to x2
+ * -When x2 is reached function flips sprite orientation to facing the opposition direction and flips velocity to negative.
+ * -When the original x position is reached function flips orientation and velocity again.
+ *
+ * @param {event} e - event automatically passed by Ticker evenent listener.
+ */
+function moveBirds(e) {
+
+    for(i = 0; i < spriteArr.length; i++){
+        if(spriteArr[i].x > spriteArr[i].x2) {
+            spriteArr[i].xVel *= -1;
+            spriteArr[i].scaleX = -1;
+        }
+        if(spriteArr[i].x < spriteArr[i].xHome) {
+            spriteArr[i].xVel *= -1;
+            spriteArr[i].scaleX = 1;
+        }
+
+        spriteArr[i].x += spriteArr[i].xVel;
+        spriteArr[i].setBounds(spriteArr[i].x - (75/2), spriteArr[i].y - 33,75, 66);
+    }
+}
+
 
 
 /**
  
  */
-function tweenBird(bird, x2) {
 
-    var x1 = bird.x;
-    createjs.Tween.get(bird)
-        .wait(500)
-        .to({scaleX:1},{x:x2}, 2000);
-}
 
 //============================================================================//
 //                                  debugging                                 //
@@ -1653,7 +1712,7 @@ function tweenBird(bird, x2) {
 function buildLine(){ //for diagnostic purposes
     
     var line = new createjs.Shape();
-    line.graphics.beginStroke("red").drawRect(bird1.getBounds().x, bird1.getBounds().y, bird1.getBounds().width, bird1.getBounds().height);
+    line.graphics.beginStroke("red").drawRect(0,0,spriteArr[0].getBounds().width, spriteArr[0].getBounds().height);
     stage.addChild(line);
 }
 
@@ -1664,16 +1723,24 @@ function buildDebugText(){  //alert("buildDebugText()b");//for diagnostic purpos
     
     debugText = new createjs.Text("", "15px Arial", "red");
     debugText.x = 10;
-    debugText.y = 550;
+    debugText.y = 500;
     stage.addChild(debugText);
+
+    boundBox = new createjs.Shape();
+    boundBox.graphics.beginStroke("#fa0a20").drawRect(0,0,75,66);
+    boundBox.x = spriteArr[0].x;
+    boundBox.y = spriteArr[0].y;
 }
 
 function updateDebugText(){
 
-    debugText.text  = "Bird1 Bounds W: " + bird1.getBounds().width +  "Drone Intersect Bird? "
-    + drone.getBounds().intersects(bird1.getBounds());
-}
+    debugText.text = "sprite.x" + spriteArr[0].x
+        + "\nsprite.y: " + spriteArr[0].y
+        + "\nsprite xVel; " + spriteArr[0].xVel;
 
+    boundBox.x = spriteArr[0].getBounds().x;
+    boundBox.y = spriteArr[0].getBounds().y;
+}
 
 
 
