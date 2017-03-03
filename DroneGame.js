@@ -54,6 +54,7 @@ var ocean;      //hazard forming the bottom of the playing area
 var dropZone;   //Drop Zone is an area player must deliver the parcel to
 var bird1;      //hazard
 var dot;
+
 //GUI objects
 var pauseText;  //text that is visible when game is paused
 var timerText;  //displays the remaining time in the course
@@ -244,7 +245,9 @@ function detectKey(e){ //alert("detectKey()");
             dKeyDown = true;    //flag for movement
             break;
         case ESC_KEY:
-            pauseGame();        //calls function
+            if(!courseOver){
+                pauseGame();        //calls function
+            }
             break;
         case SPACEBAR:
             if(createjs.Ticker.paused){
@@ -334,7 +337,7 @@ function runGame(e){ //alert("runGame()");
 
         detectLanding(parcel);  //checks whether parcel has landed
 
-        updateDebugText();
+       // updateDebugText();
         stage.update();         //redraws the stage
     }
 }
@@ -396,8 +399,8 @@ function buildGUI(){ //alert("buildGUI()");
     buildLevelNumber(1);
     
     //diagnostic purposes
-    buildLine();
-    buildDebugText();
+    //buildLine();
+    //buildDebugText();
 }
 
 /**
@@ -588,7 +591,7 @@ function buildCourse1(){ //alert("buildCourse1()");
     
     //add movable objects
     buildBird(350, 175, 700, 1);
-    buildBird(25, 450, 350, 2);
+    buildBird(25, 450, 350, 1.5);
     
     //add actors
     buildDrone();
@@ -625,9 +628,9 @@ function buildBackground(target){//alert("buildBackground()");
 }
 
 function buildLevelNumber(num){
-    levelNumber = new createjs.Text("Level: " + num, "10px Helvetica", "#fffdfd");
-    levelNumber.x = 750;
-    levelNumber.y = 75;
+    levelNumber = new createjs.Text("Level: " + num, "30px Arial", "#fffdfd");
+    levelNumber.x = 10;
+    levelNumber.y = 10;
     stage.addChild(levelNumber);
     stage.update();
 }
