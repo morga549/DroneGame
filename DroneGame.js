@@ -531,15 +531,15 @@ function buildStartUpMessage(){ //alert("buildStartUpMessage()");
     
     var m2 = "GOAL:\nPickup and deliver the Package to the Drop Zone. Land in the\nDrop Zone while carrying the Package to finish the course.\n\nAvoid hazards like birds and water. You must beat the Timer too!\n\n";
     
-    var m3 = "CONTROLS:\nClick and Hold the Left Mouse button to fly upward\nA Key: move left\nD Key: move right\n\n";
+    var m3 = "CONTROLS:\nLEFT MOUSE button: Click and hold to fly upward\nA Key: move left\nD Key: move right\nSPACEBAR: pickup or drop Package (must land on Package)\n\n";
     
     var m4 = "You cannot move while landed. Press ESC to pause the game.\n\n";
     
     var m5 = "                  - press SPACEBAR to start the game -";
     
     //Text object
-    startupText = new createjs.Text(m1 + m2 + m3 + m4 + m5, "16px Arial", "black");
-    startupText.x = pauseRect.x - 225;
+    startupText = new createjs.Text(m1 + m2 + m3 + m4 + m5, "15px Arial", "black");
+    startupText.x = pauseRect.x - 212;
     startupText.y = pauseRect.y - 125;
     
     //add to stage
