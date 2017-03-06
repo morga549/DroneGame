@@ -84,7 +84,7 @@ var d_beginFillBody;            //in the case of Drone upgrades
 var gameObjectsArr = [];        //contains all game objects not in dContainer
 var movingArr = [];             //contains all moving objects not in a container
 var aKeyDown = dKeyDown = escKeyDown = spacebarDown = false; //keyboard input flags
-var gameOver = courseOver = false;  //game flags
+var courseOver = false;  //game flags
 var currentCourse = 1;  //contains the number of the current course being played
 var spriteArr = [];
 
@@ -219,6 +219,7 @@ function restartGame(e){ //alert("restartGame()");
     window.removeEventListener("mouseup", moveDown);
     
     createjs.Ticker.paused = false;  //unpause Ticker
+    courseOver = false;              //flag
     
     //rebuild game objects
     buildGame();
