@@ -204,13 +204,16 @@ function startGame(e){ //alert("startGame()");
  Restart does not go through Loading Screen.
  */
 function restartGame(e){ //alert("restartGame()");
-    
+
     //clear the stage
-    stage.clear();
+    //stage.clear();    //??doesn't actually remove children from stage
+    stage = new createjs.Stage("canvas");
+
     
     //clear game arrays
     gameObjectsArr = [];
     movingArr = [];
+    spriteArr = [];
     
     //remove event listeners from window to prevent event duplication
     window.removeEventListener("keydown", detectKey);
