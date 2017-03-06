@@ -1198,6 +1198,9 @@ function pickup(target){ //alert("pickup()");
     //update dContainer bounds to reflect it is now also carrying target
     cBounds = dContainer.getBounds();
     dContainer.setBounds(cBounds.x, cBounds.y, cBounds.width, dContainer.height);
+    
+    //update drone property to reflect that what it landed on was the parcel
+    drone.landed = false;
 }
 
 /**
@@ -1234,7 +1237,11 @@ function drop(target){ //alert("drop()");
     stage.addChild(target);    //adding to stage removes from dContainer
     
     //check whether to add target to movingArr
-    if(!dContainer.landed){ //mid-air drop
+    if(dContainer.landed && drone.landed){ //drone is landed but parcel is hanging
+        movingArr.push(target);
+        target.landed = false;
+    }
+    else if(!dContainer.landed){ //mid-air drop
         movingArr.push(target);
         target.landed = false;
     }
