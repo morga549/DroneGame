@@ -84,7 +84,7 @@ var d_beginFillBody;            //in the case of Drone upgrades
 var gameObjectsArr = [];        //contains all game objects not in dContainer
 var movingArr = [];             //contains all moving objects not in a container
 var aKeyDown = dKeyDown = escKeyDown = spacebarDown = false; //keyboard input flags
-var gameOver = courseOver = false;  //game flags
+var courseOver = false;  //game flags
 var currentCourse = 1;  //contains the number of the current course being played
 var spriteArr = [];
 
@@ -219,6 +219,7 @@ function restartGame(e){ //alert("restartGame()");
     window.removeEventListener("mouseup", moveDown);
     
     createjs.Ticker.paused = false;  //unpause Ticker
+    courseOver = false;              //flag
     
     //rebuild game objects
     buildGame();
@@ -1197,6 +1198,9 @@ function pickup(target){ //alert("pickup()");
     //update dContainer bounds to reflect it is now also carrying target
     cBounds = dContainer.getBounds();
     dContainer.setBounds(cBounds.x, cBounds.y, cBounds.width, dContainer.height);
+    
+    //update drone property to reflect that what it landed on was the parcel
+    drone.landed = false;
 }
 
 /**
@@ -1233,7 +1237,11 @@ function drop(target){ //alert("drop()");
     stage.addChild(target);    //adding to stage removes from dContainer
     
     //check whether to add target to movingArr
-    if(!dContainer.landed){ //mid-air drop
+    if(dContainer.landed && drone.landed){ //drone is landed but parcel is hanging
+        movingArr.push(target);
+        target.landed = false;
+    }
+    else if(!dContainer.landed){ //mid-air drop
         movingArr.push(target);
         target.landed = false;
     }
